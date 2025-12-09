@@ -1,444 +1,193 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<title>Calculadora Nutricional</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>HTML + CSS + JS + TS + Noticias 🌍</title>
+  <meta name="description" content="Demo integrando HTML, CSS, JS, TS, clima, hora y noticias.">
+  <meta name="keywords" content="HTML, CSS, JavaScript, TypeScript, noticias, clima, example">
+  <meta name="author" content="Tu Nombre">
 
-<!-- TypeScript compilador -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/typescript/5.3.3/typescript.min.js"></script>
+  <!-- ⚠️ Asegurate de reemplazar YOUR_NEWSAPI_KEY por tu clave real -->
+  <script src="https://cdn.jsdelivr.net/npm/typescript@5.9.2/lib/typescript.js"></script>
 
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    color: #333;
-    line-height: 1.4;
-  }
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const tsCode = document.querySelector("#ts")?.textContent ?? "";
+      const jsCode = ts.transpile(tsCode, { target: "ESNext", module: "ESNext" });
+      try {
+        eval(jsCode);
+      } catch (err) {
+        console.error("Error ejecutando JS transpileado:", err);
+      }
+    });
+  </script>
 
-  h1, h2 {
-    font-weight: 500;
-  }
-
-  select, input, button {
-    padding: 6px 10px;
-    font-size: 14px;
-    margin: 4px 0;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-  }
-
-  button {
-    cursor: pointer;
-    background: #eaeaea;
-  }
-
-  button:hover {
-    background: #dcdcdc;
-  }
-
-  table {
-    border-collapse: collapse;
-    margin: 10px 0;
-    width: 100%;
-  }
-
-  th, td {
-    border: 1px solid #CCC;
-    padding: 6px;
-    text-align: left;
-  }
-
-  .hidden {
-    display: none;
-  }
-
-  ul {
-    list-style: none;
-    padding-left: 0;
-    margin: 4px 0;
-  }
-
-  ul li button {
-    width: 100%;
-    text-align: left;
-    background: #f5f5f5;
-    border: 1px solid #ccc;
-  }
-
-  /* Dropdown minimalista */
-  #selector-total {
-    display: inline-block;
-    position: relative;
-    margin-left: 10px;
-  }
-
-  #menu-total {
-    position: absolute;
-    left: 0;
-    top: 30px;
-    background: white;
-    border: 1px solid #bbb;
-    padding: 10px;
-    display: none;
-    z-index: 20;
-  }
-</style>
-</head>
-
-<body>
-
-<h1>Calculadora Nutricional</h1>
-
-<div id="contenedor-comidas"></div>
-
-<h2>Total</h2>
-
-<!-- Botón mostrar + dropdown -->
-<button onclick="toggleSeccion('total')">Mostrar tabla y gráfico</button>
-
-<div id="selector-total">
-  <button onclick="toggleDropdown()">Incluir en total ▼</button>
-
-  <div id="menu-total">
-    <!-- Checkboxes generados dinámicamente -->
-    <label><input type="checkbox" class="chk-total" value="Desayuno" checked> Desayuno</label><br>
-    <label><input type="checkbox" class="chk-total" value="Almuerzo" checked> Almuerzo</label><br>
-    <label><input type="checkbox" class="chk-total" value="Merienda" checked> Merienda</label><br>
-    <label><input type="checkbox" class="chk-total" value="Cena" checked> Cena</label>
-  </div>
-</div>
-
-<div id="seccion-total" class="hidden">
-  <table>
-    <thead>
-      <tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr>
-    </thead>
-    <tbody id="tabla-total"></tbody>
-  </table>
-
-  <canvas id="grafico-total"></canvas>
-</div>
-
-<!-- ================================================================ -->
-<!--   TYPECRIPT REAL – SE COMPILA AUTOMÁTICAMENTE EN ESTE MISMO HTML -->
-<!-- ================================================================ -->
-
-<script type="text/typescript" id="ts-code">
-// @ts-check
-
-/* =============================
-   Interfaces TypeScript
-============================= */
-type Nutriente = { nombre: string; unidad: string };
-type Composicion = { [nutriente: string]: number };
-type Alimento = { nombre: string; categoria: string; composicion: Composicion };
-type RegistroComida = { alimento: Alimento; peso: number };
-type Totales = { [nutriente: string]: number };
-
-/* =============================
-   Datos base
-============================= */
-const comidas: string[] = ["Desayuno", "Almuerzo", "Merienda", "Cena"];
-
-const categorias: string[] = ["Frutas", "Verduras", "Cereales", "Lácteos", "Carnes"];
-
-const nutrientes: Nutriente[] = [
-  { nombre: "Proteínas", unidad: "g" },
-  { nombre: "Carbohidratos", unidad: "g" },
-  { nombre: "Grasas totales", unidad: "g" },
-  { nombre: "Fibra", unidad: "g" },
-  { nombre: "Hierro", unidad: "mg" },
-  { nombre: "Calcio", unidad: "mg" }
-];
-
-const vdr: Record<string, number> = {
-  Proteínas: 50,
-  Carbohidratos: 300,
-  "Grasas totales": 70,
-  Fibra: 25,
-  Hierro: 18,
-  Calcio: 1000
-};
-
-const alimentos: Alimento[] = [
-  { nombre: "Manzana", categoria: "Frutas", composicion: { Carbohidratos: 14, Fibra: 2.4 } },
-  { nombre: "Leche", categoria: "Lácteos", composicion: { Proteínas: 3.4, "Grasas totales": 1, Calcio: 120 } },
-  { nombre: "Pan integral", categoria: "Cereales", composicion: { Carbohidratos: 40, Proteínas: 8, Fibra: 6 } },
-  { nombre: "Espinaca", categoria: "Verduras", composicion: { Fibra: 2.2, Hierro: 2.7, Calcio: 99 } },
-  { nombre: "Pechuga de pollo", categoria: "Carnes", composicion: { Proteínas: 31, "Grasas totales": 3.6 } }
-];
-
-/* =============================
-   Estado global
-============================= */
-const datosComidas: Record<string, RegistroComida[]> = {};
-const datosManuales: Record<string, Record<string, number>> = {};
-const graficos: Record<string, any> = {};
-
-const contenedor = document.getElementById("contenedor-comidas")!;
-
-/* =============================
-   Mostrar/Ocultar secciones
-============================= */
-(window as any).toggleSeccion = (id: string) => {
-  const sec = document.getElementById("seccion-" + id)!;
-  const btn = event!.target as HTMLButtonElement;
-
-  const oculto = sec.classList.contains("hidden");
-  sec.classList.toggle("hidden");
-  btn.textContent = oculto ? "Ocultar tabla y gráfico" : "Mostrar tabla y gráfico";
-};
-
-/* =============================
-   Dropdown total
-============================= */
-(window as any).toggleDropdown = () => {
-  const menu = document.getElementById("menu-total")!;
-  menu.style.display = menu.style.display === "block" ? "none" : "block";
-};
-
-/* =============================
-   Render dinámico de secciones
-============================= */
-comidas.forEach(comida => {
-  datosComidas[comida] = [];
-  datosManuales[comida] = {};
-
-  const div = document.createElement("div");
-  div.innerHTML = `
-    <h2>${comida}</h2>
-
-    <select id="cat-${comida}">
-      <option value="">Todas las categorías</option>
-      ${categorias.map(c => `<option value="${c}">${c}</option>`).join("")}
-    </select>
-
-    <input id="buscar-${comida}" placeholder="Buscar alimento" />
-    <ul id="sugerencias-${comida}"></ul>
-
-    <input id="peso-${comida}" type="number" placeholder="Peso (g)" />
-
-    <button id="add-${comida}">Agregar</button>
-    <button onclick="toggleSeccion('${comida}')">Mostrar tabla y gráfico</button>
-
-    <div id="seccion-${comida}" class="hidden">
-      <table>
-        <thead>
-          <tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr>
-        </thead>
-        <tbody id="tabla-${comida}"></tbody>
-      </table>
-
-      <canvas id="grafico-${comida}"></canvas>
-
-      <h3>Editor Manual</h3>
-      <table>
-        <thead>
-          <tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr>
-        </thead>
-        <tbody id="editor-${comida}"></tbody>
-      </table>
-
-      <button id="aplicar-${comida}">Aplicar nutrientes</button>
-    </div>
-  `;
-
-  contenedor.appendChild(div);
-
-  renderAutocompletado(comida);
-  renderEditor(comida);
-});
-
-/* =============================
-   Autocompletado
-============================= */
-function renderAutocompletado(comida: string) {
-  const inputBuscar = document.getElementById(`buscar-${comida}`) as HTMLInputElement;
-  const selectorCat = document.getElementById(`cat-${comida}`) as HTMLSelectElement;
-  const ulSug = document.getElementById(`sugerencias-${comida}`)!;
-  const inputPeso = document.getElementById(`peso-${comida}`) as HTMLInputElement;
-  const btnAgregar = document.getElementById(`add-${comida}`)!;
-
-  function actualizar() {
-    const val = inputBuscar.value.toLowerCase();
-    const cat = selectorCat.value;
-
-    const sugerencias = alimentos
-      .filter(a =>
-        a.nombre.toLowerCase().includes(val) &&
-        (!cat || a.categoria === cat)
-      )
-      .map(a => `<li><button data-nombre="${a.nombre}">${a.nombre}</button></li>`);
-
-    ulSug.innerHTML = sugerencias.join("");
-  }
-
-  inputBuscar.addEventListener("input", actualizar);
-  selectorCat.addEventListener("change", actualizar);
-
-  ulSug.addEventListener("click", e => {
-    const btn = e.target as HTMLElement;
-    if (btn.dataset.nombre) {
-      inputBuscar.value = btn.dataset.nombre;
-      ulSug.innerHTML = "";
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      text-align: center;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #f4f4f4;
     }
-  });
+    main {
+      padding: 1rem;
+      flex: 1;
+    }
+    footer {
+      padding: 0.7rem;
+      background: #111;
+      color: white;
+    }
+    .tarjeta {
+      background: white;
+      padding: 1rem;
+      margin: 1rem auto;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+    .meteo {
+      font-size: 1.2rem;
+      margin-top: 0.5rem;
+    }
+    .noticia {
+      margin-bottom: 1rem;
+    }
+    .noticia h4 {
+      margin: 0.5rem 0 0.3rem;
+    }
+    .noticia p {
+      margin: 0.3rem 0;
+    }
+    .noticia a {
+      color: #0645AD;
+      text-decoration: none;
+    }
+    .noticia a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mi Demo Web 🌐</h1>
+    <p>Integrado: Clima | Hora | Usuario | Noticias</p>
+  </header>
 
-  btnAgregar.addEventListener("click", () => {
-    const nombre = inputBuscar.value.trim();
-    const peso = parseFloat(inputPeso.value);
-    const alimento = alimentos.find(a => a.nombre === nombre);
+  <main id="contenido">
+    <!-- Usuario -->
+    <!-- Clima / Hora -->
+    <section class="tarjeta" id="info-tiempo">
+      <h3>📅 Fecha, 🕒 Hora & 🌤️ Clima</h3>
+      <p id="fecha-hora">Cargando...</p>
+      <p id="clima" class="meteo">Obteniendo clima...</p>
+    </section>
 
-    if (!alimento || !peso) return;
+    <!-- Noticias aparecerán acá -->
+    <section class="tarjeta" id="noticias">
+      <h3>📰 Noticias recientes</h3>
+      <div id="lista-noticias">Cargando noticias...</div>
+    </section>
+  </main>
 
-    datosComidas[comida].push({ alimento, peso });
-    calcular();
-  });
-}
+  <footer>
+    <p>© 2025 - Mi Web Integrada</p>
+  </footer>
 
-/* =============================
-   Editor manual
-============================= */
-function renderEditor(comida: string) {
-  const editor = document.getElementById(`editor-${comida}`)!;
-
-  nutrientes.forEach(n => {
-    datosManuales[comida][n.nombre] = 0;
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${n.nombre}</td>
-      <td><input id="input-${comida}-${n.nombre}" type="number" value="0"></td>
-      <td>${n.unidad}</td>
-      <td id="vdr-${comida}-${n.nombre}">0%</td>
-    `;
-
-    editor.appendChild(row);
-
-    const input = document.getElementById(`input-${comida}-${n.nombre}`)! as HTMLInputElement;
-
-    input.addEventListener("input", () => {
-      const val = parseFloat(input.value) || 0;
-      datosManuales[comida][n.nombre] = val;
-
-      const porc = (val / vdr[n.nombre]) * 100;
-      document.getElementById(`vdr-${comida}-${n.nombre}`)!.textContent = porc.toFixed(1) + "%";
+  <script id="ts" type="text/typescript">
+    // ————————— Usuario de ejemplo
+    interface Usuario {
+      nombre: string;
+      edad: number;
+      fechaNacimiento: string;
+    }
+    const usuarios: Usuario[] = [
+      { nombre: "Agustín Diaz", edad: 28, fechaNacimiento: "14/01/1997" }
+    ];
+    usuarios.forEach(u => {
+      document.querySelector("#contenido")?.insertAdjacentHTML(
+        "afterbegin",
+        `<p>👤 Hola soy <strong>${u.nombre}</strong>, tengo ${u.edad} años y nací el ${u.fechaNacimiento}.</p>`
+      );
     });
-  });
 
-  document.getElementById(`aplicar-${comida}`)!.addEventListener("click", () => {
-    const alimento: Alimento = {
-      nombre: "Manual",
-      categoria: "Manual",
-      composicion: {}
-    };
+    // ————————— Fecha y Hora en tiempo real
+    function actualizarFechaHora() {
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString("es-AR");
+      const hora = ahora.toLocaleTimeString("es-AR");
+      document.getElementById("fecha-hora")!.textContent =
+        `📅 ${fecha} | 🕒 ${hora}`;
+    }
+    actualizarFechaHora();
+    setInterval(actualizarFechaHora, 1000);
 
-    nutrientes.forEach(n => {
-      alimento.composicion[n.nombre] = datosManuales[comida][n.nombre];
-    });
+    // ————————— Clima (Córdoba Capital) con API pública
+    async function obtenerClima() {
+      const url =
+        "https://api.open-meteo.com/v1/forecast?latitude=-31.42&longitude=-64.18&current_weather=true&timezone=America%2FArgentina%2FBuenos_Aires";
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const temp = data.current_weather.temperature;
+        const code = data.current_weather.weathercode;
+        const iconos: Record<number,string> = {
+          0:"☀️",1:"🌤️",2:"⛅",3:"☁️",
+          45:"🌫️",48:"🌫️",51:"🌦️",61:"🌧️",
+          71:"❄️",95:"⛈️"
+        };
+        document.getElementById("clima")!.textContent =
+          `${iconos[code] ?? "🌍"} ${temp}°C en Córdoba`;
+      } catch (err) {
+        console.error("Error obteniendo clima:", err);
+        document.getElementById("clima")!.textContent =
+          "⚠️ No se pudo obtener el clima";
+      }
+    }
+    obtenerClima();
+    setInterval(obtenerClima, 60000);
 
-    datosComidas[comida].push({ alimento, peso: 100 });
-    calcular();
-  });
-}
+    // ————————— Noticias con NewsAPI
+    async function cargarNoticias() {
+      const apiKey = "c9a01369403b4c618b31893010504c2f";  // ← REEMPLAZÁ con tu clave
+      const url = `https://newsapi.org/v2/top-headlines?language=es&pageSize=5&apiKey=${apiKey}`;
 
-/* =============================
-   Render tabla
-============================= */
-function renderTabla(comida: string, totales: Totales) {
-  const tabla = document.getElementById(`tabla-${comida}`);
-  if (!tabla) return;
-
-  tabla.innerHTML = "";
-
-  nutrientes.forEach(n => {
-    const val = totales[n.nombre] || 0;
-    const porc = (val / vdr[n.nombre]) * 100;
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${n.nombre}</td>
-      <td>${val.toFixed(2)}</td>
-      <td>${n.unidad}</td>
-      <td>${porc.toFixed(1)}%</td>
-    `;
-
-    tabla.appendChild(row);
-  });
-}
-
-/* =============================
-   Render gráfico
-============================= */
-function renderGrafico(comida: string, totales: Totales) {
-  const canvas = document.getElementById(`grafico-${comida}`) as HTMLCanvasElement;
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d")!;
-
-  const labels = ["Proteínas", "Carbohidratos", "Grasas totales"];
-  const datos = labels.map(n => totales[n]);
-
-  if (graficos[comida]) graficos[comida].destroy();
-
-  graficos[comida] = new (window as any).Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels,
-      datasets: [
-        {
-          data: datos,
-          backgroundColor: ["#4CAF50", "#FFEB3B", "#F44336"]
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.status === "ok") {
+          const cont = document.getElementById("lista-noticias")!;
+          cont.innerHTML = "";  // vaciar mensaje de carga
+          data.articles.forEach((art: any) => {
+            cont.insertAdjacentHTML("beforeend",
+              `<div class="noticia">
+                 <h4>${art.title}</h4>
+                 <p>${art.description ?? ""}</p>
+                 <a href="${art.url}" target="_blank" rel="noopener">Leer más</a>
+               </div>`
+            );
+          });
+        } else {
+          console.error("NewsAPI error:", data);
+          document.getElementById("lista-noticias")!.textContent =
+            "⚠️ No se pudo cargar noticias";
         }
-      ]
-    },
-    options: { responsive: true }
-  });
-}
-
-/* =============================
-   Cálculo total
-============================= */
-function calcular() {
-  const checks = document.querySelectorAll(".chk-total") as NodeListOf<HTMLInputElement>;
-
-  const seleccionadas = Array.from(checks)
-    .filter(c => c.checked)
-    .map(c => c.value);
-
-  datosComidas["total"] = [];
-
-  seleccionadas.forEach(comida => {
-    datosComidas[comida].forEach(reg => datosComidas["total"].push(reg));
-  });
-
-  [...comidas, "total"].forEach(comida => {
-    const totales: Totales = {};
-    nutrientes.forEach(n => (totales[n.nombre] = 0));
-
-    datosComidas[comida].forEach(({ alimento, peso }) => {
-      nutrientes.forEach(n => {
-        totales[n.nombre] += (alimento.composicion[n.nombre] || 0) * peso / 100;
-      });
-    });
-
-    renderTabla(comida, totales);
-    renderGrafico(comida, totales);
-  });
-}
-</script>
-
-<!-- ============================================= -->
-<!--  EJECUTA EL TYPESCRIPT TRANSFORMADO A JAVASCRIPT -->
-<!-- ============================================= -->
-<script>
-  const tsCode = document.getElementById("ts-code").textContent;
-  const jsCode = ts.transpile(tsCode);
-  eval(jsCode);
-</script>
-
+      } catch (err) {
+        console.error("Error al cargar noticias:", err);
+        document.getElementById("lista-noticias")!.textContent =
+          "⚠️ Error al conectar con NewsAPI";
+      }
+    }
+    cargarNoticias();
+  </script>
 </body>
 </html>
