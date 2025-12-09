@@ -1,193 +1,243 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Noticias + Voz + Clima + Hora 🌐</title>
 
-  <title>HTML + CSS + JS + TS + Noticias 🌍</title>
-  <meta name="description" content="Demo integrando HTML, CSS, JS, TS, clima, hora y noticias.">
-  <meta name="keywords" content="HTML, CSS, JavaScript, TypeScript, noticias, clima, example">
-  <meta name="author" content="Tu Nombre">
+<!-- Ejecutar TypeScript en navegador -->
+<script src="https://cdn.jsdelivr.net/npm/typescript@5.9.2/lib/typescript.js"></script>
 
-  <!-- ⚠️ Asegurate de reemplazar YOUR_NEWSAPI_KEY por tu clave real -->
-  <script src="https://cdn.jsdelivr.net/npm/typescript@5.9.2/lib/typescript.js"></script>
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const tsCode = document.querySelector("#ts")?.textContent ?? "";
+  const jsCode = ts.transpile(tsCode, { target: "ESNext", module: "ESNext" });
+  eval(jsCode);
+});
+</script>
 
-  <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      const tsCode = document.querySelector("#ts")?.textContent ?? "";
-      const jsCode = ts.transpile(tsCode, { target: "ESNext", module: "ESNext" });
-      try {
-        eval(jsCode);
-      } catch (err) {
-        console.error("Error ejecutando JS transpileado:", err);
-      }
-    });
-  </script>
+<style>
+*{box-sizing:border-box;}
+body{
+  margin:0;font-family:system-ui,sans-serif;
+  background:#fff;color:#111;
+  display:flex;flex-direction:column;min-height:100vh;
+}
+header{
+  text-align:center;padding:1.2rem;border-bottom:1px solid #ddd;
+}
+h1{margin:0;font-size:1.8rem;font-weight:700;}
+main{flex:1;padding:1rem;max-width:800px;margin:auto;width:100%;}
+.tarjeta{
+  background:white;border:1px solid #e5e5e5;border-radius:14px;
+  padding:1.2rem;margin:1rem 0;
+}
+.tarjeta h3{
+  margin:0 0 .7rem;font-size:1.2rem;border-bottom:1px solid #eee;padding-bottom:.4rem;
+}
 
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: system-ui, sans-serif;
-      text-align: center;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background: #f4f4f4;
-    }
-    main {
-      padding: 1rem;
-      flex: 1;
-    }
-    footer {
-      padding: 0.7rem;
-      background: #111;
-      color: white;
-    }
-    .tarjeta {
-      background: white;
-      padding: 1rem;
-      margin: 1rem auto;
-      width: 90%;
-      max-width: 500px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: left;
-    }
-    .meteo {
-      font-size: 1.2rem;
-      margin-top: 0.5rem;
-    }
-    .noticia {
-      margin-bottom: 1rem;
-    }
-    .noticia h4 {
-      margin: 0.5rem 0 0.3rem;
-    }
-    .noticia p {
-      margin: 0.3rem 0;
-    }
-    .noticia a {
-      color: #0645AD;
-      text-decoration: none;
-    }
-    .noticia a:hover {
-      text-decoration: underline;
-    }
-  </style>
+#categorias{
+  display:flex;overflow-x:auto;gap:.6rem;padding-bottom:.3rem;
+}
+.categoria-btn{
+  padding:.45rem .75rem;border-radius:8px;
+  background:#eee;cursor:pointer;white-space:nowrap;font-size:.9rem;
+}
+.categoria-btn.active{background:#111;color:white;}
+
+.noticia{
+  background:#fafafa;border:1px solid #eee;border-radius:10px;
+  padding:.8rem;margin:.8rem 0;
+}
+.noticia h4{margin:.1rem 0;font-size:1rem;}
+.noticia button{
+  border:none;border-radius:8px;cursor:pointer;margin-top:.4rem;
+  padding:.5rem .8rem;font-size:.85rem;
+}
+.leer-voz{background:#0057e7;color:white;margin-left:.5rem;}
+.btn-leer{background:#111;color:white;}
+
+footer{text-align:center;border-top:1px solid #ddd;padding:1rem;font-size:.85rem;}
+
+#modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);
+  display:none;align-items:center;justify-content:center;z-index:20;
+}
+#modal-contenido{
+  width:95%;max-width:950px;height:90vh;background:white;
+  border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
+}
+#btn-cerrar{
+  background:#111;color:white;padding:.7rem;text-align:center;
+  cursor:pointer;font-weight:bold;
+}
+iframe{border:none;flex:1;width:100%;}
+</style>
 </head>
+
 <body>
-  <header>
-    <h1>Mi Demo Web 🌐</h1>
-    <p>Integrado: Clima | Hora | Usuario | Noticias</p>
-  </header>
 
-  <main id="contenido">
-    <!-- Usuario -->
-    <!-- Clima / Hora -->
-    <section class="tarjeta" id="info-tiempo">
-      <h3>📅 Fecha, 🕒 Hora & 🌤️ Clima</h3>
-      <p id="fecha-hora">Cargando...</p>
-      <p id="clima" class="meteo">Obteniendo clima...</p>
-    </section>
+<header>
+  <h1>Mi Web Integrada 🌐</h1>
+  <p>Noticias · Voz · Clima · Hora · Categorías</p>
+</header>
 
-    <!-- Noticias aparecerán acá -->
-    <section class="tarjeta" id="noticias">
-      <h3>📰 Noticias recientes</h3>
-      <div id="lista-noticias">Cargando noticias...</div>
-    </section>
-  </main>
+<main>
 
-  <footer>
-    <p>© 2025 - Mi Web Integrada</p>
-  </footer>
+  <section class="tarjeta">
+    <h3>📅 Fecha & Hora</h3>
+    <p id="fecha">⏳</p>
+  </section>
 
-  <script id="ts" type="text/typescript">
-    // ————————— Usuario de ejemplo
-    interface Usuario {
-      nombre: string;
-      edad: number;
-      fechaNacimiento: string;
-    }
-    const usuarios: Usuario[] = [
-      { nombre: "Agustín Diaz", edad: 28, fechaNacimiento: "14/01/1997" }
-    ];
-    usuarios.forEach(u => {
-      document.querySelector("#contenido")?.insertAdjacentHTML(
-        "afterbegin",
-        `<p>👤 Hola soy <strong>${u.nombre}</strong>, tengo ${u.edad} años y nací el ${u.fechaNacimiento}.</p>`
-      );
+  <section class="tarjeta">
+    <h3>🌦️ Clima en Córdoba</h3>
+    <p id="clima">Cargando clima...</p>
+  </section>
+
+  <section class="tarjeta">
+    <h3>📰 Noticias</h3>
+    <div id="categorias"></div>
+    <div id="noticias">⏳ Cargando...</div>
+  </section>
+
+</main>
+
+<footer>© 2025 — Agustín Díaz</footer>
+
+<!-- Modal Lectura Web -->
+<div id="modal">
+  <div id="modal-contenido">
+    <div id="btn-cerrar">Cerrar ✖️</div>
+    <iframe id="visor"></iframe>
+  </div>
+</div>
+
+<!-- ================= TypeScript ================= -->
+<script id="ts" type="text/typescript">
+
+// FECHA Y HORA
+function actualizarFecha(){
+  const f=new Date();
+  fecha!.textContent=
+    `${f.toLocaleDateString("es-AR")} — ⏱ ${f.toLocaleTimeString("es-AR")}`;
+}
+setInterval(actualizarFecha,1000);
+actualizarFecha();
+
+
+// CLIMA
+async function obtenerClima(){
+  try{
+    const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-31.42&longitude=-64.18&current_weather=true&timezone=America%2FArgentina%2FBuenos_Aires");
+    const d=await r.json();
+    const c=d.current_weather;
+    const icon:any={0:"☀️",1:"🌤️",2:"⛅",3:"☁️",61:"🌧️",95:"⛈️"};
+    clima!.textContent=`${icon[c.weathercode]??"🌍"} ${c.temperature}°C — Córdoba`;
+  }catch{clima!.textContent="Error clima ❌"}
+}
+obtenerClima();
+
+
+// CATEGORÍAS
+const categorias=[
+ "ultimas","politica","economia","deportes","tecnologia",
+ "ciencia","salud","musica","espectaculos","comedia"
+];
+let categoria="ultimas",pagina=0;
+
+const contCat=document.getElementById("categorias")!;
+categorias.forEach((c,i)=>{
+  const b=document.createElement("div");
+  b.textContent=c[0].toUpperCase()+c.slice(1);
+  b.className="categoria-btn"+(i===0?" active":"");
+  b.onclick=()=>seleccionar(c,i);
+  contCat.appendChild(b);
+});
+
+function seleccionar(c:string,i:number){
+  categoria=c;pagina=0;
+  noticias!.innerHTML="";
+  detenerVoz();
+  document.querySelectorAll(".categoria-btn").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".categoria-btn")[i].classList.add("active");
+  cargarNoticias();
+}
+
+
+// 🔊 LECTOR DE VOZ
+let vozActiva=false;
+let utter:SpeechSynthesisUtterance|null=null;
+
+function leerTexto(text:string){
+  detenerVoz();
+  utter=new SpeechSynthesisUtterance(text);
+  utter.lang="es-AR";
+  speechSynthesis.speak(utter);
+  vozActiva=true;
+}
+function detenerVoz(){
+  if(vozActiva)speechSynthesis.cancel();
+  vozActiva=false;
+}
+
+
+// NOTICIAS (Google News RSS — GRATIS)
+async function cargarNoticias(){
+  try{
+    const url=`https://news.google.com/rss/search?q=${categoria}&hl=es-419&gl=AR&ceid=AR:es`;
+    const r=await fetch(url);
+    const t=await r.text();
+    const items=[...t.matchAll(/<item>([\s\S]*?)<\/item>/g)]
+      .slice(pagina*6,(pagina+1)*6);
+
+    if(!items.length)return;
+
+    items.forEach(i=>{
+      const titulo=i[1].match(/<title>(.*?)<\/title>/)![1];
+      const link=i[1].match(/<link>(.*?)<\/link>/)![1];
+      const desc=i[1].match(/<description>([\s\S]*?)<\/description>/)?.[1]
+                    .replace(/<[^>]+>/g,"")||titulo;
+
+      noticias!.insertAdjacentHTML("beforeend",
+        `<div class="noticia">
+          <h4>${titulo}</h4>
+          <button class="btn-leer" data-url="${link}">Abrir</button>
+          <button class="leer-voz" data-text="${desc}">🔊</button>
+        </div>`);
     });
 
-    // ————————— Fecha y Hora en tiempo real
-    function actualizarFechaHora() {
-      const ahora = new Date();
-      const fecha = ahora.toLocaleDateString("es-AR");
-      const hora = ahora.toLocaleTimeString("es-AR");
-      document.getElementById("fecha-hora")!.textContent =
-        `📅 ${fecha} | 🕒 ${hora}`;
-    }
-    actualizarFechaHora();
-    setInterval(actualizarFechaHora, 1000);
+    pagina++;
+  }catch{
+    noticias!.innerHTML="⚠️ Error al cargar noticias";
+  }
+}
+cargarNoticias();
 
-    // ————————— Clima (Córdoba Capital) con API pública
-    async function obtenerClima() {
-      const url =
-        "https://api.open-meteo.com/v1/forecast?latitude=-31.42&longitude=-64.18&current_weather=true&timezone=America%2FArgentina%2FBuenos_Aires";
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const temp = data.current_weather.temperature;
-        const code = data.current_weather.weathercode;
-        const iconos: Record<number,string> = {
-          0:"☀️",1:"🌤️",2:"⛅",3:"☁️",
-          45:"🌫️",48:"🌫️",51:"🌦️",61:"🌧️",
-          71:"❄️",95:"⛈️"
-        };
-        document.getElementById("clima")!.textContent =
-          `${iconos[code] ?? "🌍"} ${temp}°C en Córdoba`;
-      } catch (err) {
-        console.error("Error obteniendo clima:", err);
-        document.getElementById("clima")!.textContent =
-          "⚠️ No se pudo obtener el clima";
-      }
-    }
-    obtenerClima();
-    setInterval(obtenerClima, 60000);
 
-    // ————————— Noticias con NewsAPI
-    async function cargarNoticias() {
-      const apiKey = "c9a01369403b4c618b31893010504c2f";  // ← REEMPLAZÁ con tu clave
-      const url = `https://newsapi.org/v2/top-headlines?language=es&pageSize=5&apiKey=${apiKey}`;
-
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.status === "ok") {
-          const cont = document.getElementById("lista-noticias")!;
-          cont.innerHTML = "";  // vaciar mensaje de carga
-          data.articles.forEach((art: any) => {
-            cont.insertAdjacentHTML("beforeend",
-              `<div class="noticia">
-                 <h4>${art.title}</h4>
-                 <p>${art.description ?? ""}</p>
-                 <a href="${art.url}" target="_blank" rel="noopener">Leer más</a>
-               </div>`
-            );
-          });
-        } else {
-          console.error("NewsAPI error:", data);
-          document.getElementById("lista-noticias")!.textContent =
-            "⚠️ No se pudo cargar noticias";
-        }
-      } catch (err) {
-        console.error("Error al cargar noticias:", err);
-        document.getElementById("lista-noticias")!.textContent =
-          "⚠️ Error al conectar con NewsAPI";
-      }
-    }
+// Scroll infinito
+window.addEventListener("scroll",()=>{
+  if(window.innerHeight+window.scrollY>=document.body.offsetHeight-300){
     cargarNoticias();
-  </script>
+  }
+});
+
+
+// Clicks
+document.addEventListener("click",(e:any)=>{
+  if(e.target.classList.contains("btn-leer")){
+    detenerVoz();
+    visor!.setAttribute("src",e.target.dataset.url);
+    modal!.style.display="flex";
+  }
+  if(e.target.classList.contains("leer-voz")){
+    leerTexto(e.target.dataset.text);
+  }
+  if(e.target.id==="btn-cerrar"){
+    modal!.style.display="none";
+    detenerVoz();
+  }
+});
+
+</script>
 </body>
 </html>
