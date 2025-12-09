@@ -1,23 +1,286 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>HTML</title>
-  
-  <!-- HTML -->
-  
-
-  <!-- Custom Styles -->
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.hidden { display: none; }
+</style>
 </head>
 
 <body>
-  <h1>Hola</h1>
-  <p>Nothing to see here...</p>
-  <!-- Project -->
-  <script src="main.js"></script>
+<h1>Calculadora Nutricional</h1>
+<div id="contenedor-comidas"></div>
+
+<h2>Total</h2>
+<button onclick="toggleSeccion('total')">Mostrar tabla y gráfico</button>
+
+<div id="seccion-total" class="hidden">
+  <table>
+    <thead><tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr></thead>
+    <tbody id="tabla-total"></tbody>
+  </table>
+  <canvas id="grafico-total"></canvas>
+</div>
+
+<script>
+/* ----------- Datos base ----------- */
+const comidas = ["Desayuno", "Almuerzo", "Merienda", "Cena"];
+const categorias = ["Frutas", "Verduras", "Cereales", "Lácteos", "Carnes"];
+
+const nutrientes = [
+  { nombre: "Proteínas", unidad: "g" },
+  { nombre: "Carbohidratos", unidad: "g" },
+  { nombre: "Grasas totales", unidad: "g" },
+  { nombre: "Fibra", unidad: "g" },
+  { nombre: "Hierro", unidad: "mg" },
+  { nombre: "Calcio", unidad: "mg" }
+];
+
+const vdr = {
+  "Proteínas": 50, "Carbohidratos": 300, "Grasas totales": 70,
+  "Fibra": 25, "Hierro": 18, "Calcio": 1000
+};
+
+const alimentos = [
+  { nombre: "Manzana", categoria: "Frutas", composicion: { "Carbohidratos": 14, "Fibra": 2.4 } },
+  { nombre: "Leche", categoria: "Lácteos", composicion: { "Proteínas": 3.4, "Grasas totales": 1, "Calcio": 120 } },
+  { nombre: "Pan integral", categoria: "Cereales", composicion: { "Carbohidratos": 40, "Proteínas": 8, "Fibra": 6 } },
+  { nombre: "Espinaca", categoria: "Verduras", composicion: { "Fibra": 2.2, "Hierro": 2.7, "Calcio": 99 } },
+  { nombre: "Pechuga de pollo", categoria: "Carnes", composicion: { "Proteínas": 31, "Grasas totales": 3.6 } }
+];
+
+/* Estado global */
+const datosComidas = {};
+const datosManuales = {};
+const graficos = {};
+
+const contenedor = document.getElementById("contenedor-comidas");
+
+function toggleSeccion(id) {
+  const seccion = document.getElementById("seccion-" + id);
+  const btn = event.target;
+  if (seccion.classList.contains("hidden")) {
+    seccion.classList.remove("hidden");
+    btn.textContent = "Ocultar tabla y gráfico";
+  } else {
+    seccion.classList.add("hidden");
+    btn.textContent = "Mostrar tabla y gráfico";
+  }
+}
+
+comidas.forEach(comida => {
+  datosComidas[comida] = [];
+  datosManuales[comida] = {};
+  
+  const section = document.createElement("div");
+  section.innerHTML = `
+    <h2>${comida}</h2>
+
+    <select id="cat-${comida}">
+      <option value="">Todas las categorías</option>
+      ${categorias.map(c => `<option value="${c}">${c}</option>`).join("")}
+    </select>
+
+    <input id="buscar-${comida}" placeholder="Buscar alimento" />
+    <ul id="sugerencias-${comida}"></ul>
+
+    <input id="peso-${comida}" type="number" placeholder="Peso (g)" />
+    <button onclick="agregarAlimento('${comida}')">Agregar</button>
+    <button onclick="toggleSeccion('${comida}')">Mostrar tabla y gráfico</button>
+
+    <div id="seccion-${comida}" class="hidden">
+      <table>
+        <thead><tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr></thead>
+        <tbody id="tabla-${comida}"></tbody>
+      </table>
+
+      <canvas id="grafico-${comida}"></canvas>
+
+      <h3>Editor Manual</h3>
+      <table>
+        <thead><tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr></thead>
+        <tbody id="editor-${comida}"></tbody>
+      </table>
+
+      <button onclick="aplicarManual('${comida}')">Aplicar nutrientes</button>
+    </div>
+  `;
+  
+  contenedor.appendChild(section);
+  
+  RenderAutocompletado(comida);
+  RenderEditor(comida);
+});
+
+function RenderAutocompletado(comida) {
+  const inputBuscar = document.getElementById(`buscar-${comida}`);
+  const selectorCat = document.getElementById(`cat-${comida}`);
+  const ulSug = document.getElementById(`sugerencias-${comida}`);
+  const btnAgregar = document.querySelector(`[onclick="agregarAlimento('${comida}')"]`);
+  const inputPeso = document.getElementById(`peso-${comida}`);
+  
+  // Buscar y renderizar sugerencias
+  function actualizarSugerencias() {
+    const val = inputBuscar.value.toLowerCase();
+    const cat = selectorCat.value;
+    
+    const sugerencias = alimentos
+      .filter(a =>
+        a.nombre.toLowerCase().includes(val) &&
+        (!cat || a.categoria === cat)
+      )
+      .map(a => `<li><button data-nombre="${a.nombre}">${a.nombre}</button></li>`);
+    
+    ulSug.innerHTML = sugerencias.join("");
+  }
+  
+  inputBuscar.addEventListener("input", actualizarSugerencias);
+  selectorCat.addEventListener("change", actualizarSugerencias);
+  
+  // Selección del alimento desde la lista
+  ulSug.addEventListener("click", e => {
+    if (e.target.dataset.nombre) {
+      inputBuscar.value = e.target.dataset.nombre;
+      ulSug.innerHTML = "";
+    }
+  });
+  
+  // Agregar alimento SIN necesitar función aparte
+  btnAgregar.onclick = () => {
+    const nombre = inputBuscar.value.trim();
+    const peso = parseFloat(inputPeso.value);
+    const alimento = alimentos.find(a => a.nombre === nombre);
+    
+    if (!alimento || !peso) return;
+    
+    datosComidas[comida].push({ alimento, peso });
+    Calculadora();
+  };
+}
+
+function RenderEditor(comida) {
+  const editor = document.getElementById(`editor-${comida}`);
+  nutrientes.forEach(n => {
+    datosManuales[comida][n.nombre] = 0;
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${n.nombre}</td>
+      <td><input type="number" id="input-${comida}-${n.nombre}" value="0" /></td>
+      <td>${n.unidad}</td>
+      <td id="vdr-${comida}-${n.nombre}">0%</td>
+    `;
+    editor.appendChild(row);
+
+    document.getElementById(`input-${comida}-${n.nombre}`).addEventListener("input", e => {
+      const val = parseFloat(e.target.value) || 0;
+      datosManuales[comida][n.nombre] = val;
+      const porc = ((val / vdr[n.nombre]) * 100).toFixed(1);
+      document.getElementById(`vdr-${comida}-${n.nombre}`).textContent = `${porc}%`;
+    });
+  });
+}
+
+function aplicarManual(comida) {
+  const alimento = {
+    nombre: "Manual",
+    composicion: {}
+  };
+  
+  nutrientes.forEach(n => {
+    alimento.composicion[n.nombre] = datosManuales[comida][n.nombre];
+  });
+  
+  datosComidas[comida].push({ alimento, peso: 100 });
+  Calculadora();
+}
+
+function RenderTabla(comida, totales) {
+  const tabla = document.getElementById(`tabla-${comida}`);
+  if (!tabla) return;
+
+  tabla.innerHTML = "";
+  nutrientes.forEach(n => {
+    const val = totales[n.nombre];
+    const porc = vdr[n.nombre] ? (val / vdr[n.nombre]) * 100 : 0;
+
+    let estilo = "";
+    if (comida === "total") {
+      if (porc > 110) estilo = "color:#c62828;";
+      else if (porc >= 90 && porc <= 110) estilo = "color:#2e7d32;";
+    } else {
+      if (porc > 27.5) estilo = "color:#c62828;";
+      else if (porc >= 22.5 && porc <= 27.5) estilo = "color:#2e7d32;";
+    }
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${n.nombre}</td>
+      <td>${val.toFixed(2)}</td>
+      <td>${n.unidad}</td>
+      <td style="${estilo}">${porc.toFixed(1)}%</td>
+    `;
+    tabla.appendChild(row);
+  });
+}
+
+function RenderGrafico(comida, totales) {
+  const canvas = document.getElementById(`grafico-${comida}`);
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const labels = ["Proteínas", "Carbohidratos", "Grasas totales"];
+  const datos = labels.map(n => totales[n]);
+
+  if (graficos[comida]) graficos[comida].destroy();
+
+  graficos[comida] = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data: datos,
+        backgroundColor: ["#4CAF50", "#FFEB3B", "#F44336"]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#000" } }
+      }
+    }
+  });
+}
+
+function Calculadora() {
+
+  datosComidas.total = [];
+
+  comidas.forEach(comida => {
+    const check = document.getElementById(`check-${comida}`);
+    if (!check || check.checked) {
+      datosComidas[comida].forEach(({ alimento, peso }) => {
+        datosComidas.total.push({ alimento, peso });
+      });
+    }
+  });
+
+  [...comidas, "total"].forEach(comida => {
+    const totales = {};
+    nutrientes.forEach(n => totales[n.nombre] = 0);
+
+    datosComidas[comida].forEach(({ alimento, peso }) => {
+      nutrientes.forEach(n => {
+        totales[n.nombre] += (alimento.composicion[n.nombre] || 0) * peso / 100;
+      });
+    });
+
+    RenderTabla(comida, totales);
+    RenderGrafico(comida, totales);
+  });
+}
+</script>
+
 </body>
 </html>
