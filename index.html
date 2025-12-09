@@ -1,34 +1,151 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8" />
+<title>Calculadora Nutricional</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- TypeScript compilador -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/typescript/5.3.3/typescript.min.js"></script>
+
 <style>
-.hidden { display: none; }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    color: #333;
+    line-height: 1.4;
+  }
+
+  h1, h2 {
+    font-weight: 500;
+  }
+
+  select, input, button {
+    padding: 6px 10px;
+    font-size: 14px;
+    margin: 4px 0;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+  }
+
+  button {
+    cursor: pointer;
+    background: #eaeaea;
+  }
+
+  button:hover {
+    background: #dcdcdc;
+  }
+
+  table {
+    border-collapse: collapse;
+    margin: 10px 0;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid #CCC;
+    padding: 6px;
+    text-align: left;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 4px 0;
+  }
+
+  ul li button {
+    width: 100%;
+    text-align: left;
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+  }
+
+  /* Dropdown minimalista */
+  #selector-total {
+    display: inline-block;
+    position: relative;
+    margin-left: 10px;
+  }
+
+  #menu-total {
+    position: absolute;
+    left: 0;
+    top: 30px;
+    background: white;
+    border: 1px solid #bbb;
+    padding: 10px;
+    display: none;
+    z-index: 20;
+  }
 </style>
 </head>
 
 <body>
+
 <h1>Calculadora Nutricional</h1>
+
 <div id="contenedor-comidas"></div>
 
 <h2>Total</h2>
+
+<!-- Botón mostrar + dropdown -->
 <button onclick="toggleSeccion('total')">Mostrar tabla y gráfico</button>
+
+<div id="selector-total">
+  <button onclick="toggleDropdown()">Incluir en total ▼</button>
+
+  <div id="menu-total">
+    <!-- Checkboxes generados dinámicamente -->
+    <label><input type="checkbox" class="chk-total" value="Desayuno" checked> Desayuno</label><br>
+    <label><input type="checkbox" class="chk-total" value="Almuerzo" checked> Almuerzo</label><br>
+    <label><input type="checkbox" class="chk-total" value="Merienda" checked> Merienda</label><br>
+    <label><input type="checkbox" class="chk-total" value="Cena" checked> Cena</label>
+  </div>
+</div>
 
 <div id="seccion-total" class="hidden">
   <table>
-    <thead><tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr></thead>
+    <thead>
+      <tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr>
+    </thead>
     <tbody id="tabla-total"></tbody>
   </table>
+
   <canvas id="grafico-total"></canvas>
 </div>
 
-<script>
-/* ----------- Datos base ----------- */
-const comidas = ["Desayuno", "Almuerzo", "Merienda", "Cena"];
-const categorias = ["Frutas", "Verduras", "Cereales", "Lácteos", "Carnes"];
+<!-- ================================================================ -->
+<!--   TYPECRIPT REAL – SE COMPILA AUTOMÁTICAMENTE EN ESTE MISMO HTML -->
+<!-- ================================================================ -->
 
-const nutrientes = [
+<script type="text/typescript" id="ts-code">
+// @ts-check
+
+/* =============================
+   Interfaces TypeScript
+============================= */
+type Nutriente = { nombre: string; unidad: string };
+type Composicion = { [nutriente: string]: number };
+type Alimento = { nombre: string; categoria: string; composicion: Composicion };
+type RegistroComida = { alimento: Alimento; peso: number };
+type Totales = { [nutriente: string]: number };
+
+/* =============================
+   Datos base
+============================= */
+const comidas: string[] = ["Desayuno", "Almuerzo", "Merienda", "Cena"];
+
+const categorias: string[] = ["Frutas", "Verduras", "Cereales", "Lácteos", "Carnes"];
+
+const nutrientes: Nutriente[] = [
   { nombre: "Proteínas", unidad: "g" },
   { nombre: "Carbohidratos", unidad: "g" },
   { nombre: "Grasas totales", unidad: "g" },
@@ -37,44 +154,61 @@ const nutrientes = [
   { nombre: "Calcio", unidad: "mg" }
 ];
 
-const vdr = {
-  "Proteínas": 50, "Carbohidratos": 300, "Grasas totales": 70,
-  "Fibra": 25, "Hierro": 18, "Calcio": 1000
+const vdr: Record<string, number> = {
+  Proteínas: 50,
+  Carbohidratos: 300,
+  "Grasas totales": 70,
+  Fibra: 25,
+  Hierro: 18,
+  Calcio: 1000
 };
 
-const alimentos = [
-  { nombre: "Manzana", categoria: "Frutas", composicion: { "Carbohidratos": 14, "Fibra": 2.4 } },
-  { nombre: "Leche", categoria: "Lácteos", composicion: { "Proteínas": 3.4, "Grasas totales": 1, "Calcio": 120 } },
-  { nombre: "Pan integral", categoria: "Cereales", composicion: { "Carbohidratos": 40, "Proteínas": 8, "Fibra": 6 } },
-  { nombre: "Espinaca", categoria: "Verduras", composicion: { "Fibra": 2.2, "Hierro": 2.7, "Calcio": 99 } },
-  { nombre: "Pechuga de pollo", categoria: "Carnes", composicion: { "Proteínas": 31, "Grasas totales": 3.6 } }
+const alimentos: Alimento[] = [
+  { nombre: "Manzana", categoria: "Frutas", composicion: { Carbohidratos: 14, Fibra: 2.4 } },
+  { nombre: "Leche", categoria: "Lácteos", composicion: { Proteínas: 3.4, "Grasas totales": 1, Calcio: 120 } },
+  { nombre: "Pan integral", categoria: "Cereales", composicion: { Carbohidratos: 40, Proteínas: 8, Fibra: 6 } },
+  { nombre: "Espinaca", categoria: "Verduras", composicion: { Fibra: 2.2, Hierro: 2.7, Calcio: 99 } },
+  { nombre: "Pechuga de pollo", categoria: "Carnes", composicion: { Proteínas: 31, "Grasas totales": 3.6 } }
 ];
 
-/* Estado global */
-const datosComidas = {};
-const datosManuales = {};
-const graficos = {};
+/* =============================
+   Estado global
+============================= */
+const datosComidas: Record<string, RegistroComida[]> = {};
+const datosManuales: Record<string, Record<string, number>> = {};
+const graficos: Record<string, any> = {};
 
-const contenedor = document.getElementById("contenedor-comidas");
+const contenedor = document.getElementById("contenedor-comidas")!;
 
-function toggleSeccion(id) {
-  const seccion = document.getElementById("seccion-" + id);
-  const btn = event.target;
-  if (seccion.classList.contains("hidden")) {
-    seccion.classList.remove("hidden");
-    btn.textContent = "Ocultar tabla y gráfico";
-  } else {
-    seccion.classList.add("hidden");
-    btn.textContent = "Mostrar tabla y gráfico";
-  }
-}
+/* =============================
+   Mostrar/Ocultar secciones
+============================= */
+(window as any).toggleSeccion = (id: string) => {
+  const sec = document.getElementById("seccion-" + id)!;
+  const btn = event!.target as HTMLButtonElement;
 
+  const oculto = sec.classList.contains("hidden");
+  sec.classList.toggle("hidden");
+  btn.textContent = oculto ? "Ocultar tabla y gráfico" : "Mostrar tabla y gráfico";
+};
+
+/* =============================
+   Dropdown total
+============================= */
+(window as any).toggleDropdown = () => {
+  const menu = document.getElementById("menu-total")!;
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+};
+
+/* =============================
+   Render dinámico de secciones
+============================= */
 comidas.forEach(comida => {
   datosComidas[comida] = [];
   datosManuales[comida] = {};
-  
-  const section = document.createElement("div");
-  section.innerHTML = `
+
+  const div = document.createElement("div");
+  div.innerHTML = `
     <h2>${comida}</h2>
 
     <select id="cat-${comida}">
@@ -86,12 +220,15 @@ comidas.forEach(comida => {
     <ul id="sugerencias-${comida}"></ul>
 
     <input id="peso-${comida}" type="number" placeholder="Peso (g)" />
-    <button onclick="agregarAlimento('${comida}')">Agregar</button>
+
+    <button id="add-${comida}">Agregar</button>
     <button onclick="toggleSeccion('${comida}')">Mostrar tabla y gráfico</button>
 
     <div id="seccion-${comida}" class="hidden">
       <table>
-        <thead><tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr></thead>
+        <thead>
+          <tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr>
+        </thead>
         <tbody id="tabla-${comida}"></tbody>
       </table>
 
@@ -99,176 +236,188 @@ comidas.forEach(comida => {
 
       <h3>Editor Manual</h3>
       <table>
-        <thead><tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr></thead>
+        <thead>
+          <tr><th>Nutriente</th><th>Cantidad</th><th>Unidad</th><th>%VDR</th></tr>
+        </thead>
         <tbody id="editor-${comida}"></tbody>
       </table>
 
-      <button onclick="aplicarManual('${comida}')">Aplicar nutrientes</button>
+      <button id="aplicar-${comida}">Aplicar nutrientes</button>
     </div>
   `;
-  
-  contenedor.appendChild(section);
-  
-  RenderAutocompletado(comida);
-  RenderEditor(comida);
+
+  contenedor.appendChild(div);
+
+  renderAutocompletado(comida);
+  renderEditor(comida);
 });
 
-function RenderAutocompletado(comida) {
-  const inputBuscar = document.getElementById(`buscar-${comida}`);
-  const selectorCat = document.getElementById(`cat-${comida}`);
-  const ulSug = document.getElementById(`sugerencias-${comida}`);
-  const btnAgregar = document.querySelector(`[onclick="agregarAlimento('${comida}')"]`);
-  const inputPeso = document.getElementById(`peso-${comida}`);
-  
-  // Buscar y renderizar sugerencias
-  function actualizarSugerencias() {
+/* =============================
+   Autocompletado
+============================= */
+function renderAutocompletado(comida: string) {
+  const inputBuscar = document.getElementById(`buscar-${comida}`) as HTMLInputElement;
+  const selectorCat = document.getElementById(`cat-${comida}`) as HTMLSelectElement;
+  const ulSug = document.getElementById(`sugerencias-${comida}`)!;
+  const inputPeso = document.getElementById(`peso-${comida}`) as HTMLInputElement;
+  const btnAgregar = document.getElementById(`add-${comida}`)!;
+
+  function actualizar() {
     const val = inputBuscar.value.toLowerCase();
     const cat = selectorCat.value;
-    
+
     const sugerencias = alimentos
       .filter(a =>
         a.nombre.toLowerCase().includes(val) &&
         (!cat || a.categoria === cat)
       )
       .map(a => `<li><button data-nombre="${a.nombre}">${a.nombre}</button></li>`);
-    
+
     ulSug.innerHTML = sugerencias.join("");
   }
-  
-  inputBuscar.addEventListener("input", actualizarSugerencias);
-  selectorCat.addEventListener("change", actualizarSugerencias);
-  
-  // Selección del alimento desde la lista
+
+  inputBuscar.addEventListener("input", actualizar);
+  selectorCat.addEventListener("change", actualizar);
+
   ulSug.addEventListener("click", e => {
-    if (e.target.dataset.nombre) {
-      inputBuscar.value = e.target.dataset.nombre;
+    const btn = e.target as HTMLElement;
+    if (btn.dataset.nombre) {
+      inputBuscar.value = btn.dataset.nombre;
       ulSug.innerHTML = "";
     }
   });
-  
-  // Agregar alimento SIN necesitar función aparte
-  btnAgregar.onclick = () => {
+
+  btnAgregar.addEventListener("click", () => {
     const nombre = inputBuscar.value.trim();
     const peso = parseFloat(inputPeso.value);
     const alimento = alimentos.find(a => a.nombre === nombre);
-    
+
     if (!alimento || !peso) return;
-    
+
     datosComidas[comida].push({ alimento, peso });
-    Calculadora();
-  };
+    calcular();
+  });
 }
 
-function RenderEditor(comida) {
-  const editor = document.getElementById(`editor-${comida}`);
+/* =============================
+   Editor manual
+============================= */
+function renderEditor(comida: string) {
+  const editor = document.getElementById(`editor-${comida}`)!;
+
   nutrientes.forEach(n => {
     datosManuales[comida][n.nombre] = 0;
 
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${n.nombre}</td>
-      <td><input type="number" id="input-${comida}-${n.nombre}" value="0" /></td>
+      <td><input id="input-${comida}-${n.nombre}" type="number" value="0"></td>
       <td>${n.unidad}</td>
       <td id="vdr-${comida}-${n.nombre}">0%</td>
     `;
+
     editor.appendChild(row);
 
-    document.getElementById(`input-${comida}-${n.nombre}`).addEventListener("input", e => {
-      const val = parseFloat(e.target.value) || 0;
+    const input = document.getElementById(`input-${comida}-${n.nombre}`)! as HTMLInputElement;
+
+    input.addEventListener("input", () => {
+      const val = parseFloat(input.value) || 0;
       datosManuales[comida][n.nombre] = val;
-      const porc = ((val / vdr[n.nombre]) * 100).toFixed(1);
-      document.getElementById(`vdr-${comida}-${n.nombre}`).textContent = `${porc}%`;
+
+      const porc = (val / vdr[n.nombre]) * 100;
+      document.getElementById(`vdr-${comida}-${n.nombre}`)!.textContent = porc.toFixed(1) + "%";
     });
   });
-}
 
-function aplicarManual(comida) {
-  const alimento = {
-    nombre: "Manual",
-    composicion: {}
-  };
-  
-  nutrientes.forEach(n => {
-    alimento.composicion[n.nombre] = datosManuales[comida][n.nombre];
+  document.getElementById(`aplicar-${comida}`)!.addEventListener("click", () => {
+    const alimento: Alimento = {
+      nombre: "Manual",
+      categoria: "Manual",
+      composicion: {}
+    };
+
+    nutrientes.forEach(n => {
+      alimento.composicion[n.nombre] = datosManuales[comida][n.nombre];
+    });
+
+    datosComidas[comida].push({ alimento, peso: 100 });
+    calcular();
   });
-  
-  datosComidas[comida].push({ alimento, peso: 100 });
-  Calculadora();
 }
 
-function RenderTabla(comida, totales) {
+/* =============================
+   Render tabla
+============================= */
+function renderTabla(comida: string, totales: Totales) {
   const tabla = document.getElementById(`tabla-${comida}`);
   if (!tabla) return;
 
   tabla.innerHTML = "";
-  nutrientes.forEach(n => {
-    const val = totales[n.nombre];
-    const porc = vdr[n.nombre] ? (val / vdr[n.nombre]) * 100 : 0;
 
-    let estilo = "";
-    if (comida === "total") {
-      if (porc > 110) estilo = "color:#c62828;";
-      else if (porc >= 90 && porc <= 110) estilo = "color:#2e7d32;";
-    } else {
-      if (porc > 27.5) estilo = "color:#c62828;";
-      else if (porc >= 22.5 && porc <= 27.5) estilo = "color:#2e7d32;";
-    }
+  nutrientes.forEach(n => {
+    const val = totales[n.nombre] || 0;
+    const porc = (val / vdr[n.nombre]) * 100;
 
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${n.nombre}</td>
       <td>${val.toFixed(2)}</td>
       <td>${n.unidad}</td>
-      <td style="${estilo}">${porc.toFixed(1)}%</td>
+      <td>${porc.toFixed(1)}%</td>
     `;
+
     tabla.appendChild(row);
   });
 }
 
-function RenderGrafico(comida, totales) {
-  const canvas = document.getElementById(`grafico-${comida}`);
+/* =============================
+   Render gráfico
+============================= */
+function renderGrafico(comida: string, totales: Totales) {
+  const canvas = document.getElementById(`grafico-${comida}`) as HTMLCanvasElement;
   if (!canvas) return;
 
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d")!;
+
   const labels = ["Proteínas", "Carbohidratos", "Grasas totales"];
   const datos = labels.map(n => totales[n]);
 
   if (graficos[comida]) graficos[comida].destroy();
 
-  graficos[comida] = new Chart(ctx, {
+  graficos[comida] = new (window as any).Chart(ctx, {
     type: "doughnut",
     data: {
       labels,
-      datasets: [{
-        data: datos,
-        backgroundColor: ["#4CAF50", "#FFEB3B", "#F44336"]
-      }]
+      datasets: [
+        {
+          data: datos,
+          backgroundColor: ["#4CAF50", "#FFEB3B", "#F44336"]
+        }
+      ]
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: "bottom", labels: { color: "#000" } }
-      }
-    }
+    options: { responsive: true }
   });
 }
 
-function Calculadora() {
+/* =============================
+   Cálculo total
+============================= */
+function calcular() {
+  const checks = document.querySelectorAll(".chk-total") as NodeListOf<HTMLInputElement>;
 
-  datosComidas.total = [];
+  const seleccionadas = Array.from(checks)
+    .filter(c => c.checked)
+    .map(c => c.value);
 
-  comidas.forEach(comida => {
-    const check = document.getElementById(`check-${comida}`);
-    if (!check || check.checked) {
-      datosComidas[comida].forEach(({ alimento, peso }) => {
-        datosComidas.total.push({ alimento, peso });
-      });
-    }
+  datosComidas["total"] = [];
+
+  seleccionadas.forEach(comida => {
+    datosComidas[comida].forEach(reg => datosComidas["total"].push(reg));
   });
 
   [...comidas, "total"].forEach(comida => {
-    const totales = {};
-    nutrientes.forEach(n => totales[n.nombre] = 0);
+    const totales: Totales = {};
+    nutrientes.forEach(n => (totales[n.nombre] = 0));
 
     datosComidas[comida].forEach(({ alimento, peso }) => {
       nutrientes.forEach(n => {
@@ -276,10 +425,19 @@ function Calculadora() {
       });
     });
 
-    RenderTabla(comida, totales);
-    RenderGrafico(comida, totales);
+    renderTabla(comida, totales);
+    renderGrafico(comida, totales);
   });
 }
+</script>
+
+<!-- ============================================= -->
+<!--  EJECUTA EL TYPESCRIPT TRANSFORMADO A JAVASCRIPT -->
+<!-- ============================================= -->
+<script>
+  const tsCode = document.getElementById("ts-code").textContent;
+  const jsCode = ts.transpile(tsCode);
+  eval(jsCode);
 </script>
 
 </body>
