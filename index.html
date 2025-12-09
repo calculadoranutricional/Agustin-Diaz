@@ -1,243 +1,989 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Noticias + Voz + Clima + Hora 🌐</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noticias, Clima y Hora en Vivo 🌍 | Mi Web Integrada</title>
 
-<!-- Ejecutar TypeScript en navegador -->
-<script src="https://cdn.jsdelivr.net/npm/typescript@5.9.2/lib/typescript.js"></script>
+  <!-- SEO -->
+  <meta name="description" content="Sitio moderno con noticias actualizadas, clima en Córdoba, hora en vivo y datos de usuario. Hecho con HTML, CSS, JavaScript y TypeScript.">
+  <meta name="keywords" content="Noticias, Clima, Hora, Argentina, Córdoba, JavaScript, TypeScript, HTML5, CSS3, Web">
+  <meta name="author" content="Agustín Díaz">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://miweb.com/">
 
-<script>
-window.addEventListener("DOMContentLoaded", () => {
-  const tsCode = document.querySelector("#ts")?.textContent ?? "";
-  const jsCode = ts.transpile(tsCode, { target: "ESNext", module: "ESNext" });
-  eval(jsCode);
-});
-</script>
+  <!-- SEO Redes Sociales -->
+  <meta property="og:title" content="Mi Web Integrada | Noticias + Clima">
+  <meta property="og:description" content="Noticias al instante, clima en Córdoba y hora actualizada.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://via.placeholder.com/1200x630.png?text=Mi+Web+Integrada">
 
-<style>
-*{box-sizing:border-box;}
-body{
-  margin:0;font-family:system-ui,sans-serif;
-  background:#fff;color:#111;
-  display:flex;flex-direction:column;min-height:100vh;
-}
-header{
-  text-align:center;padding:1.2rem;border-bottom:1px solid #ddd;
-}
-h1{margin:0;font-size:1.8rem;font-weight:700;}
-main{flex:1;padding:1rem;max-width:800px;margin:auto;width:100%;}
-.tarjeta{
-  background:white;border:1px solid #e5e5e5;border-radius:14px;
-  padding:1.2rem;margin:1rem 0;
-}
-.tarjeta h3{
-  margin:0 0 .7rem;font-size:1.2rem;border-bottom:1px solid #eee;padding-bottom:.4rem;
-}
+  <!-- TypeScript -->
+  <script src="https://cdn.jsdelivr.net/npm/typescript@5.9.2/lib/typescript.js"></script>
 
-#categorias{
-  display:flex;overflow-x:auto;gap:.6rem;padding-bottom:.3rem;
-}
-.categoria-btn{
-  padding:.45rem .75rem;border-radius:8px;
-  background:#eee;cursor:pointer;white-space:nowrap;font-size:.9rem;
-}
-.categoria-btn.active{background:#111;color:white;}
+  <style>
+    /* Variables CSS */
+    :root {
+      --primary-color: #2563eb;
+      --primary-light: #3b82f6;
+      --text-color: #1f2937;
+      --text-light: #6b7280;
+      --border-color: #e5e7eb;
+      --bg-color: #ffffff;
+      --card-bg: #f8fafc;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --radius: 16px;
+      --radius-sm: 8px;
+    }
 
-.noticia{
-  background:#fafafa;border:1px solid #eee;border-radius:10px;
-  padding:.8rem;margin:.8rem 0;
-}
-.noticia h4{margin:.1rem 0;font-size:1rem;}
-.noticia button{
-  border:none;border-radius:8px;cursor:pointer;margin-top:.4rem;
-  padding:.5rem .8rem;font-size:.85rem;
-}
-.leer-voz{background:#0057e7;color:white;margin-left:.5rem;}
-.btn-leer{background:#111;color:white;}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-footer{text-align:center;border-top:1px solid #ddd;padding:1rem;font-size:.85rem;}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-#modal{
-  position:fixed;inset:0;background:rgba(0,0,0,.65);
-  display:none;align-items:center;justify-content:center;z-index:20;
-}
-#modal-contenido{
-  width:95%;max-width:950px;height:90vh;background:white;
-  border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
-}
-#btn-cerrar{
-  background:#111;color:white;padding:.7rem;text-align:center;
-  cursor:pointer;font-weight:bold;
-}
-iframe{border:none;flex:1;width:100%;}
-</style>
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+      color: white;
+      padding: 1.8rem 1rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f59e0b, #ef4444, #8b5cf6, #10b981);
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      opacity: 0.9;
+      font-size: 1rem;
+    }
+
+    /* Contenedor principal - DISEÑO NUEVO */
+    .contenedor {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding: 1.5rem;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 1024px) {
+      .contenedor {
+        flex-direction: row;
+        align-items: flex-start;
+        padding: 2rem;
+      }
+    }
+
+    /* Panel lateral (Usuario + Tiempo) */
+    .panel-lateral {
+      flex-shrink: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      .panel-lateral {
+        width: 350px;
+      }
+    }
+
+    /* Tarjetas */
+    .tarjeta {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    .tarjeta:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .tarjeta h3 {
+      font-size: 1.4rem;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Tarjeta de tiempo unificada - DISEÑO NUEVO */
+    .tiempo-unificado {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .tiempo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .tiempo-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .tiempo-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 1.2rem;
+      background: white;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s ease;
+    }
+
+    .tiempo-item:hover {
+      background: #f0f9ff;
+      border-color: var(--primary-light);
+    }
+
+    .tiempo-icono {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .tiempo-titulo {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .tiempo-valor {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-color);
+    }
+
+    .tiempo-detalle {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-top: 0.25rem;
+    }
+
+    /* Usuario */
+    .usuario-info {
+      text-align: center;
+    }
+
+    .usuario-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: white;
+      margin: 0 auto 1rem;
+    }
+
+    .usuario-nombre {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .usuario-detalles {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .usuario-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      background: white;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Contenedor de noticias - ANCHO COMPLETO */
+    .noticias-container {
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Selector de categorías - MÁS TEMAS */
+    .categorias-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: white;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .categoria-btn {
+      padding: 0.6rem 1.2rem;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 50px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .categoria-btn:hover {
+      background: #f3f4f6;
+      transform: translateY(-2px);
+      border-color: var(--primary-light);
+    }
+
+    .categoria-btn.active {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .categoria-icono {
+      font-size: 1rem;
+    }
+
+    /* Noticias - DISEÑO MEJORADO */
+    .noticias-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .noticias-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .noticia {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .noticia:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary-light);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .noticia-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .noticia-categoria {
+      background: #f0f9ff;
+      color: var(--primary-color);
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .noticia-fecha {
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+
+    .noticia h4 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      line-height: 1.4;
+      flex-grow: 1;
+    }
+
+    .noticia img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      margin: 1rem 0;
+    }
+
+    .noticia .descripcion {
+      color: var(--text-light);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      flex-grow: 1;
+    }
+
+    .noticia-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .noticia-fuente {
+      color: var(--text-light);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .btn-leer {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-leer:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 1.5rem;
+      background: #f9fafb;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-light);
+    }
+
+    /* Modal */
+    #modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    #modal-contenido {
+      background: white;
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 1200px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #btn-cerrar {
+      background: var(--primary-color);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 600;
+      border: none;
+      width: 100%;
+      transition: background 0.2s ease;
+    }
+
+    #btn-cerrar:hover {
+      background: #1d4ed8;
+    }
+
+    iframe {
+      border: none;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-light);
+    }
+
+    .loading-spinner {
+      border: 3px solid #f3f4f6;
+      border-top: 3px solid var(--primary-color);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .contenedor {
+        padding: 1rem;
+      }
+      
+      .tarjeta {
+        padding: 1.2rem;
+      }
+      
+      .categorias-container {
+        justify-content: center;
+      }
+      
+      .categoria-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+      }
+      
+      .tiempo-valor {
+        font-size: 1.3rem;
+      }
+    }
+
+    /* Animación para noticias */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .noticia {
+      animation: fadeInUp 0.4s ease forwards;
+      opacity: 0;
+    }
+
+    .noticia:nth-child(1) { animation-delay: 0.1s; }
+    .noticia:nth-child(2) { animation-delay: 0.2s; }
+    .noticia:nth-child(3) { animation-delay: 0.3s; }
+    .noticia:nth-child(4) { animation-delay: 0.4s; }
+    .noticia:nth-child(5) { animation-delay: 0.5s; }
+    .noticia:nth-child(6) { animation-delay: 0.6s; }
+    .noticia:nth-child(7) { animation-delay: 0.7s; }
+    .noticia:nth-child(8) { animation-delay: 0.8s; }
+  </style>
 </head>
 
 <body>
+  <header>
+    <h1>📰 Mi Web Integrada 🌐</h1>
+    <p>Noticias · Clima · Hora · Usuario</p>
+  </header>
 
-<header>
-  <h1>Mi Web Integrada 🌐</h1>
-  <p>Noticias · Voz · Clima · Hora · Categorías</p>
-</header>
+  <div class="contenedor">
+    <!-- Panel lateral con Usuario y Tiempo unificado -->
+    <div class="panel-lateral">
+      <!-- Usuario -->
+      <section class="tarjeta">
+        <h3>👤 Usuario</h3>
+        <div class="usuario-info">
+          <div class="usuario-avatar">AD</div>
+          <div class="usuario-nombre" id="usuario-nombre"></div>
+          <div class="usuario-detalles">
+            <div class="usuario-item">
+              <span>📍</span>
+              <span id="usuario-ciudad"></span>
+            </div>
+            <div class="usuario-item">
+              <span>🎂</span>
+              <span id="usuario-edad"></span>
+            </div>
+          </div>
+        </div>
+      </section>
 
-<main>
+      <!-- Fecha, Hora & Clima UNIFICADO -->
+      <section class="tarjeta">
+        <h3>⏰ Tiempo & Clima</h3>
+        <div class="tiempo-unificado">
+          <div class="tiempo-grid">
+            <div class="tiempo-item">
+              <div class="tiempo-icono">📅</div>
+              <div class="tiempo-titulo">Fecha</div>
+              <div class="tiempo-valor" id="fecha"></div>
+              <div class="tiempo-detalle" id="fecha-completa"></div>
+            </div>
+            <div class="tiempo-item">
+              <div class="tiempo-icono">⏰</div>
+              <div class="tiempo-titulo">Hora</div>
+              <div class="tiempo-valor" id="hora"></div>
+              <div class="tiempo-detalle">ARG</div>
+            </div>
+            <div class="tiempo-item">
+              <div class="tiempo-icono" id="clima-icono">🌡️</div>
+              <div class="tiempo-titulo">Clima</div>
+              <div class="tiempo-valor" id="clima"></div>
+              <div class="tiempo-detalle" id="clima-desc"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
-  <section class="tarjeta">
-    <h3>📅 Fecha & Hora</h3>
-    <p id="fecha">⏳</p>
-  </section>
+    <!-- Noticias - ANCHO COMPLETO -->
+    <section class="tarjeta noticias-container">
+      <h3>📰 Últimas Noticias</h3>
+      
+      <!-- Selector de categorías - MÁS TEMAS -->
+      <div class="categorias-container">
+        <button class="categoria-btn active" data-categoria="general">
+          <span class="categoria-icono">🌍</span> General
+        </button>
+        <button class="categoria-btn" data-categoria="sports">
+          <span class="categoria-icono">⚽</span> Deportes
+        </button>
+        <button class="categoria-btn" data-categoria="science">
+          <span class="categoria-icono">🔬</span> Ciencia
+        </button>
+        <button class="categoria-btn" data-categoria="technology">
+          <span class="categoria-icono">💻</span> Tecnología
+        </button>
+        <button class="categoria-btn" data-categoria="entertainment">
+          <span class="categoria-icono">🎬</span> Entretenimiento
+        </button>
+        <button class="categoria-btn" data-categoria="health">
+          <span class="categoria-icono">🏥</span> Salud
+        </button>
+        <button class="categoria-btn" data-categoria="business">
+          <span class="categoria-icono">💼</span> Negocios
+        </button>
+        <button class="categoria-btn" data-categoria="world">
+          <span class="categoria-icono">🗺️</span> Mundial
+        </button>
+        <button class="categoria-btn" data-categoria="nation">
+          <span class="categoria-icono">🇦🇷</span> Argentina
+        </button>
+        <button class="categoria-btn" data-categoria="politics">
+          <span class="categoria-icono">🏛️</span> Política
+        </button>
+      </div>
 
-  <section class="tarjeta">
-    <h3>🌦️ Clima en Córdoba</h3>
-    <p id="clima">Cargando clima...</p>
-  </section>
-
-  <section class="tarjeta">
-    <h3>📰 Noticias</h3>
-    <div id="categorias"></div>
-    <div id="noticias">⏳ Cargando...</div>
-  </section>
-
-</main>
-
-<footer>© 2025 — Agustín Díaz</footer>
-
-<!-- Modal Lectura Web -->
-<div id="modal">
-  <div id="modal-contenido">
-    <div id="btn-cerrar">Cerrar ✖️</div>
-    <iframe id="visor"></iframe>
+      <!-- Contenedor de noticias -->
+      <div id="lista-noticias">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Cargando noticias...</p>
+        </div>
+      </div>
+    </section>
   </div>
-</div>
 
-<!-- ================= TypeScript ================= -->
-<script id="ts" type="text/typescript">
+  <footer>
+    © 2025 — Agustín Díaz.
+  </footer>
 
-// FECHA Y HORA
-function actualizarFecha(){
-  const f=new Date();
-  fecha!.textContent=
-    `${f.toLocaleDateString("es-AR")} — ⏱ ${f.toLocaleTimeString("es-AR")}`;
-}
-setInterval(actualizarFecha,1000);
-actualizarFecha();
+  <!-- Modal Lector -->
+  <div id="modal">
+    <div id="modal-contenido">
+      <button id="btn-cerrar">Cerrar ✖️</button>
+      <iframe id="visor"></iframe>
+    </div>
+  </div>
 
+  <script id="ts" type="text/typescript">
+    interface Usuario {
+      nombre: string;
+      edad: number;
+      ciudad: string;
+    }
 
-// CLIMA
-async function obtenerClima(){
-  try{
-    const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=-31.42&longitude=-64.18&current_weather=true&timezone=America%2FArgentina%2FBuenos_Aires");
-    const d=await r.json();
-    const c=d.current_weather;
-    const icon:any={0:"☀️",1:"🌤️",2:"⛅",3:"☁️",61:"🌧️",95:"⛈️"};
-    clima!.textContent=`${icon[c.weathercode]??"🌍"} ${c.temperature}°C — Córdoba`;
-  }catch{clima!.textContent="Error clima ❌"}
-}
-obtenerClima();
+    interface Noticia {
+      title: string;
+      description: string;
+      image: string;
+      url: string;
+      publishedAt: string;
+      source: {
+        name: string;
+      };
+    }
 
+    // Usuario
+    const usuario: Usuario = {
+      nombre: "Agustín Díaz",
+      edad: 28,
+      ciudad: "Córdoba, Argentina"
+    };
 
-// CATEGORÍAS
-const categorias=[
- "ultimas","politica","economia","deportes","tecnologia",
- "ciencia","salud","musica","espectaculos","comedia"
-];
-let categoria="ultimas",pagina=0;
+    // Mostrar información del usuario
+    document.getElementById("usuario-nombre")!.textContent = usuario.nombre;
+    document.getElementById("usuario-ciudad")!.textContent = usuario.ciudad;
+    document.getElementById("usuario-edad")!.textContent = `${usuario.edad} años`;
 
-const contCat=document.getElementById("categorias")!;
-categorias.forEach((c,i)=>{
-  const b=document.createElement("div");
-  b.textContent=c[0].toUpperCase()+c.slice(1);
-  b.className="categoria-btn"+(i===0?" active":"");
-  b.onclick=()=>seleccionar(c,i);
-  contCat.appendChild(b);
-});
+    // Fecha y hora
+    function actualizarFechaHora() {
+      const ahora = new Date();
+      const opcionesFecha: Intl.DateTimeFormatOptions = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      const opcionesFechaCorta: Intl.DateTimeFormatOptions = {
+        day: 'numeric',
+        month: 'short'
+      };
+      const opcionesHora: Intl.DateTimeFormatOptions = { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: false 
+      };
+      
+      document.getElementById("fecha")!.textContent = 
+        ahora.toLocaleDateString("es-AR", opcionesFechaCorta);
+      document.getElementById("fecha-completa")!.textContent = 
+        ahora.toLocaleDateString("es-AR", { weekday: 'short', day: 'numeric', month: 'short' });
+      document.getElementById("hora")!.textContent = 
+        ahora.toLocaleTimeString("es-AR", { hour: '2-digit', minute: '2-digit' });
+    }
 
-function seleccionar(c:string,i:number){
-  categoria=c;pagina=0;
-  noticias!.innerHTML="";
-  detenerVoz();
-  document.querySelectorAll(".categoria-btn").forEach(x=>x.classList.remove("active"));
-  document.querySelectorAll(".categoria-btn")[i].classList.add("active");
-  cargarNoticias();
-}
+    setInterval(actualizarFechaHora, 1000);
+    actualizarFechaHora();
 
+    // Clima mejorado
+    const descripcionesClima: Record<number, string> = {
+      0: "Despejado",
+      1: "Mayormente despejado",
+      2: "Parcialmente nublado",
+      3: "Nublado",
+      45: "Niebla",
+      48: "Niebla escarchada",
+      51: "Llovizna ligera",
+      53: "Llovizna moderada",
+      55: "Llovizna intensa",
+      61: "Lluvia ligera",
+      63: "Lluvia moderada",
+      65: "Lluvia intensa",
+      71: "Nieve ligera",
+      73: "Nieve moderada",
+      75: "Nieve intensa",
+      80: "Chubascos ligeros",
+      81: "Chubascos moderados",
+      82: "Chubascos violentos",
+      85: "Nevadas ligeras",
+      86: "Nevadas intensas",
+      95: "Tormenta eléctrica",
+      96: "Tormenta eléctrica con granizo ligero",
+      99: "Tormenta eléctrica con granizo intenso"
+    };
 
-// 🔊 LECTOR DE VOZ
-let vozActiva=false;
-let utter:SpeechSynthesisUtterance|null=null;
+    const iconosClima: Record<number, string> = {
+      0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+      45: "🌫️", 48: "🌫️", 51: "🌦️", 53: "🌦️", 55: "🌧️",
+      61: "🌧️", 63: "🌧️", 65: "🌧️", 71: "❄️", 73: "❄️", 75: "❄️",
+      80: "🌦️", 81: "🌧️", 82: "⛈️", 85: "❄️", 86: "❄️",
+      95: "⛈️", 96: "⛈️", 99: "⛈️"
+    };
 
-function leerTexto(text:string){
-  detenerVoz();
-  utter=new SpeechSynthesisUtterance(text);
-  utter.lang="es-AR";
-  speechSynthesis.speak(utter);
-  vozActiva=true;
-}
-function detenerVoz(){
-  if(vozActiva)speechSynthesis.cancel();
-  vozActiva=false;
-}
+    async function obtenerClima() {
+      try {
+        const res = await fetch(
+          "https://api.open-meteo.com/v1/forecast?latitude=-31.42&longitude=-64.18&current_weather=true&timezone=America%2FArgentina%2FBuenos_Aires"
+        );
+        const data = await res.json();
+        const c = data.current_weather;
 
+        const icono = iconosClima[c.weathercode] || "🌍";
+        const descripcion = descripcionesClima[c.weathercode] || "Condiciones variables";
+        
+        document.getElementById("clima-icono")!.textContent = icono;
+        document.getElementById("clima")!.textContent = `${Math.round(c.temperature)}°C`;
+        document.getElementById("clima-desc")!.textContent = descripcion;
+      } catch (error) {
+        console.error("Error obteniendo clima:", error);
+        document.getElementById("clima")!.textContent = "--°C";
+        document.getElementById("clima-desc")!.textContent = "Error";
+      }
+    }
 
-// NOTICIAS (Google News RSS — GRATIS)
-async function cargarNoticias(){
-  try{
-    const url=`https://news.google.com/rss/search?q=${categoria}&hl=es-419&gl=AR&ceid=AR:es`;
-    const r=await fetch(url);
-    const t=await r.text();
-    const items=[...t.matchAll(/<item>([\s\S]*?)<\/item>/g)]
-      .slice(pagina*6,(pagina+1)*6);
+    obtenerClima();
+    setInterval(obtenerClima, 300000); // Actualizar cada 5 minutos
 
-    if(!items.length)return;
+    // Noticias con más categorías
+    let categoriaActual = "general";
+    const API_KEY = "c74fb3410531720e3f47c82d881c5c7f"; // Sustituir con tu API key real
 
-    items.forEach(i=>{
-      const titulo=i[1].match(/<title>(.*?)<\/title>/)![1];
-      const link=i[1].match(/<link>(.*?)<\/link>/)![1];
-      const desc=i[1].match(/<description>([\s\S]*?)<\/description>/)?.[1]
-                    .replace(/<[^>]+>/g,"")||titulo;
+    // Mapeo de categorías a temas de GNews
+    const mapeoCategorias: Record<string, string> = {
+      "general": "general",
+      "sports": "sports",
+      "science": "science",
+      "technology": "technology",
+      "entertainment": "entertainment",
+      "health": "health",
+      "business": "business",
+      "world": "world",
+      "nation": "nation",
+      "politics": "politics"
+    };
 
-      noticias!.insertAdjacentHTML("beforeend",
-        `<div class="noticia">
-          <h4>${titulo}</h4>
-          <button class="btn-leer" data-url="${link}">Abrir</button>
-          <button class="leer-voz" data-text="${desc}">🔊</button>
-        </div>`);
+    // Traducción de categorías
+    const nombresCategorias: Record<string, string> = {
+      "general": "General",
+      "sports": "Deportes",
+      "science": "Ciencia",
+      "technology": "Tecnología",
+      "entertainment": "Entretenimiento",
+      "health": "Salud",
+      "business": "Negocios",
+      "world": "Mundial",
+      "nation": "Argentina",
+      "politics": "Política"
+    };
+
+    async function cargarNoticias(categoria: string = "general") {
+      const contenedor = document.getElementById("lista-noticias")!;
+      contenedor.innerHTML = `
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Cargando noticias de ${nombresCategorias[categoria]}...</p>
+        </div>
+      `;
+
+      try {
+        // Construir URL según categoría
+        const tema = mapeoCategorias[categoria] || "general";
+        let url = `https://gnews.io/api/v4/top-headlines?lang=es&max=12&apikey=${API_KEY}`;
+        
+        if (tema !== "general") {
+          url += `&topic=${tema}`;
+        }
+
+        const res = await fetch(url);
+        
+        if (!res.ok) {
+          throw new Error(`Error HTTP: ${res.status}`);
+        }
+        
+        const data = await res.json();
+
+        if (!data.articles || data.articles.length === 0) {
+          contenedor.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: #6b7280;">
+              <p style="font-size: 1.2rem; margin-bottom: 1rem;">📭 No hay noticias disponibles</p>
+              <p>Intenta seleccionar otra categoría.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Renderizar noticias en grid
+        let noticiasHTML = '<div class="noticias-grid">';
+        
+        data.articles.forEach((art: Noticia, index: number) => {
+          const fecha = new Date(art.publishedAt);
+          const fechaFormateada = fecha.toLocaleDateString("es-AR", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+
+          noticiasHTML += `
+            <div class="noticia" style="animation-delay: ${index * 0.1}s">
+              <div class="noticia-header">
+                <div class="noticia-categoria">${nombresCategorias[categoria]}</div>
+                <div class="noticia-fecha">${fechaFormateada}</div>
+              </div>
+              <h4>${art.title}</h4>
+              ${art.image ? `<img src="${art.image}" alt="${art.title}" onerror="this.style.display='none'">` : ""}
+              ${art.description ? `<p class="descripcion">${art.description}</p>` : ""}
+              <div class="noticia-footer">
+                <div class="noticia-fuente">${art.source.name || "Fuente"}</div>
+                <button class="btn-leer" data-url="${art.url}">
+                  Leer →
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        noticiasHTML += '</div>';
+        contenedor.innerHTML = noticiasHTML;
+      } catch (error) {
+        console.error("Error cargando noticias:", error);
+        contenedor.innerHTML = `
+          <div style="text-align: center; padding: 3rem; color: #dc2626;">
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ Error al cargar noticias</p>
+            <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">Por favor, intenta nuevamente en unos minutos.</p>
+            <button class="btn-leer" onclick="cargarNoticias(categoriaActual)" style="margin: 0 auto;">
+              Reintentar
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // Cargar noticias iniciales
+    cargarNoticias(categoriaActual);
+
+    // Manejar clic en categorías
+    document.querySelectorAll(".categoria-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        const boton = target.closest(".categoria-btn") as HTMLElement;
+        const categoria = boton.dataset.categoria!;
+        
+        // Actualizar botones activos
+        document.querySelectorAll(".categoria-btn").forEach(b => 
+          b.classList.remove("active")
+        );
+        boton.classList.add("active");
+        
+        // Cargar noticias de la categoría seleccionada
+        categoriaActual = categoria;
+        cargarNoticias(categoria);
+      });
     });
 
-    pagina++;
-  }catch{
-    noticias!.innerHTML="⚠️ Error al cargar noticias";
-  }
-}
-cargarNoticias();
+    // Modal
+    document.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      
+      if (target.classList.contains("btn-leer")) {
+        const url = target.dataset.url;
+        if (url) {
+          const iframe = document.getElementById("visor") as HTMLIFrameElement;
+          iframe.src = url;
+          document.getElementById("modal")!.style.display = "flex";
+          document.body.style.overflow = "hidden";
+        }
+      }
+      
+      if (target.id === "btn-cerrar" || target.id === "modal") {
+        document.getElementById("modal")!.style.display = "none";
+        document.body.style.overflow = "auto";
+        const iframe = document.getElementById("visor") as HTMLIFrameElement;
+        iframe.src = "";
+      }
+    });
 
+    // Cerrar modal con Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        document.getElementById("modal")!.style.display = "none";
+        document.body.style.overflow = "auto";
+        const iframe = document.getElementById("visor") as HTMLIFrameElement;
+        iframe.src = "";
+      }
+    });
 
-// Scroll infinito
-window.addEventListener("scroll",()=>{
-  if(window.innerHeight+window.scrollY>=document.body.offsetHeight-300){
-    cargarNoticias();
-  }
-});
+    // Scroll suave para categorías
+    document.querySelectorAll(".categoria-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelector(".noticias-container")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      });
+    });
+  </script>
 
-
-// Clicks
-document.addEventListener("click",(e:any)=>{
-  if(e.target.classList.contains("btn-leer")){
-    detenerVoz();
-    visor!.setAttribute("src",e.target.dataset.url);
-    modal!.style.display="flex";
-  }
-  if(e.target.classList.contains("leer-voz")){
-    leerTexto(e.target.dataset.text);
-  }
-  if(e.target.id==="btn-cerrar"){
-    modal!.style.display="none";
-    detenerVoz();
-  }
-});
-
-</script>
+  <script>
+    // Transpilación TypeScript
+    window.addEventListener("DOMContentLoaded", () => {
+      const tsCode = document.querySelector("#ts")?.textContent ?? "";
+      const jsCode = ts.transpile(tsCode, { 
+        target: "ES2020", 
+        module: "ESNext",
+        strict: true
+      });
+      
+      // Crear un script y ejecutar el código transpilado
+      const script = document.createElement('script');
+      script.textContent = jsCode;
+      document.head.appendChild(script);
+    });
+  </script>
 </body>
 </html>
