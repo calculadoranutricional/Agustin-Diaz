@@ -548,21 +548,19 @@ iframe {
 .noticia:nth-child(7) { animation-delay: 0.7s; }
 .noticia:nth-child(8) { animation-delay: 0.8s; }
 
-/* Busca esta sección en tu CSS: */
-
 /* Panel lateral (Usuario + Tiempo) */
 .panel-lateral {
   flex-shrink: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* Cambia este valor: aumentado de 1.5rem a 2.5rem */
+  gap: 1.5rem;
 }
 
 @media (min-width: 1024px) {
   .panel-lateral {
     width: 350px;
-    gap: 1.5rem; /* Asegúrate de que también se aplique en pantallas grandes */
+    gap: 1.5rem;
   }
 }
   </style>
@@ -717,21 +715,9 @@ iframe {
     // Fecha y hora
     function actualizarFechaHora() {
       const ahora = new Date();
-      const opcionesFecha: Intl.DateTimeFormatOptions = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      };
       const opcionesFechaCorta: Intl.DateTimeFormatOptions = {
         day: 'numeric',
         month: 'short'
-      };
-      const opcionesHora: Intl.DateTimeFormatOptions = { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit',
-        hour12: false 
       };
       
       document.getElementById("fecha")!.textContent = 
@@ -806,7 +792,7 @@ iframe {
 
     // Noticias con más categorías
     let categoriaActual = "general";
-    const API_KEY = "77518d52661861044015ee7bd98d6815"; // Sustituir con tu API key real
+    const API_KEY = "77518d52661861044015ee7bd98d6815";
 
     // Mapeo de categorías a temas de GNews
     const mapeoCategorias: Record<string, string> = {
@@ -836,6 +822,42 @@ iframe {
       "politics": "Política"
     };
 
+    // Noticias de respaldo para cuando falle la API
+    const noticiasDeRespaldo: Noticia[] = [
+      {
+        title: "Avances en inteligencia artificial transforman la tecnología",
+        description: "Los nuevos modelos de IA están revolucionando cómo interactuamos con la tecnología diariamente.",
+        image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+        url: "#",
+        publishedAt: new Date().toISOString(),
+        source: { name: "Tech News" }
+      },
+      {
+        title: "Argentina se prepara para nuevos desafíos económicos",
+        description: "Expertos analizan las perspectivas para los próximos meses en el mercado local.",
+        image: "https://images.unsplash.com/photo-1614624532983-4ce03382d63d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+        url: "#",
+        publishedAt: new Date().toISOString(),
+        source: { name: "Economía Hoy" }
+      },
+      {
+        title: "Descubrimiento científico promete revolucionar la medicina",
+        description: "Investigadores desarrollan nueva técnica para tratamiento de enfermedades crónicas.",
+        image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+        url: "#",
+        publishedAt: new Date().toISOString(),
+        source: { name: "Ciencia Viva" }
+      },
+      {
+        title: "Deportes: Nuevo récord mundial en atletismo",
+        description: "Atleta establece marca histórica en competencia internacional.",
+        image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+        url: "#",
+        publishedAt: new Date().toISOString(),
+        source: { name: "Deportes Total" }
+      }
+    ];
+
     async function cargarNoticias(categoria: string = "general") {
       const contenedor = document.getElementById("lista-noticias")!;
       contenedor.innerHTML = `
@@ -848,74 +870,93 @@ iframe {
       try {
         // Construir URL según categoría
         const tema = mapeoCategorias[categoria] || "general";
-        let url = `https://gnews.io/api/v4/top-headlines?lang=es&max=12&apikey=${API_KEY}`;
+        const apiUrl = `https://gnews.io/api/v4/top-headlines?lang=es&max=12&apikey=${API_KEY}&topic=${tema}`;
         
-        if (tema !== "general") {
-          url += `&topic=${tema}`;
-        }
-
-        const res = await fetch(url);
+        // Usar proxy CORS para GitHub Pages
+        const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(apiUrl);
+        
+        const res = await fetch(proxyUrl, {
+          timeout: 10000 // Timeout de 10 segundos
+        });
         
         if (!res.ok) {
           throw new Error(`Error HTTP: ${res.status}`);
         }
         
         const data = await res.json();
+        const noticias = JSON.parse(data.contents);
 
-        if (!data.articles || data.articles.length === 0) {
-          contenedor.innerHTML = `
-            <div style="text-align: center; padding: 3rem; color: #6b7280;">
-              <p style="font-size: 1.2rem; margin-bottom: 1rem;">📭 No hay noticias disponibles</p>
-              <p>Intenta seleccionar otra categoría.</p>
-            </div>
-          `;
-          return;
+        if (!noticias.articles || noticias.articles.length === 0) {
+          throw new Error("No hay artículos disponibles");
         }
 
         // Renderizar noticias en grid
-        let noticiasHTML = '<div class="noticias-grid">';
-        
-        data.articles.forEach((art: Noticia, index: number) => {
-          const fecha = new Date(art.publishedAt);
-          const fechaFormateada = fecha.toLocaleDateString("es-AR", {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit"
-          });
-
-          noticiasHTML += `
-            <div class="noticia" style="animation-delay: ${index * 0.1}s">
-              <div class="noticia-header">
-                <div class="noticia-categoria">${nombresCategorias[categoria]}</div>
-                <div class="noticia-fecha">${fechaFormateada}</div>
-              </div>
-              <h4>${art.title}</h4>
-              ${art.image ? `<img src="${art.image}" alt="${art.title}" onerror="this.style.display='none'">` : ""}
-              ${art.description ? `<p class="descripcion">${art.description}</p>` : ""}
-              <div class="noticia-footer">
-                <div class="noticia-fuente">${art.source.name || "Fuente"}</div>
-                <button class="btn-leer" data-url="${art.url}">
-                  Leer →
-                </button>
-              </div>
-            </div>
-          `;
-        });
-
-        noticiasHTML += '</div>';
-        contenedor.innerHTML = noticiasHTML;
+        mostrarNoticiasEnGrid(noticias.articles, categoria);
       } catch (error) {
-        console.error("Error cargando noticias:", error);
+        console.error("Error cargando noticias de API:", error);
+        console.log("Usando noticias de respaldo...");
+        mostrarNoticiasEnGrid(noticiasDeRespaldo, categoria, true);
+      }
+    }
+
+    function mostrarNoticiasEnGrid(articulos: Noticia[], categoria: string, esRespaldo: boolean = false) {
+      const contenedor = document.getElementById("lista-noticias")!;
+      
+      if (!articulos || articulos.length === 0) {
         contenedor.innerHTML = `
-          <div style="text-align: center; padding: 3rem; color: #dc2626;">
-            <p style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ Error al cargar noticias</p>
-            <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">Por favor, intenta nuevamente en unos minutos.</p>
-            <button class="btn-leer" onclick="cargarNoticias(categoriaActual)" style="margin: 0 auto;">
-              Reintentar
-            </button>
+          <div style="text-align: center; padding: 3rem; color: #6b7280;">
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">📭 No hay noticias disponibles</p>
+            <p>Intenta seleccionar otra categoría.</p>
           </div>
         `;
+        return;
+      }
+
+      let noticiasHTML = '<div class="noticias-grid">';
+      
+      articulos.forEach((art: Noticia, index: number) => {
+        const fecha = new Date(art.publishedAt);
+        const fechaFormateada = fecha.toLocaleDateString("es-AR", {
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+        // Usar imagen por defecto si no hay
+        const imagen = art.image || 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
+        
+        noticiasHTML += `
+          <div class="noticia" style="animation-delay: ${index * 0.1}s">
+            <div class="noticia-header">
+              <div class="noticia-categoria">${nombresCategorias[categoria]}${esRespaldo ? ' (Demo)' : ''}</div>
+              <div class="noticia-fecha">${fechaFormateada}</div>
+            </div>
+            <h4>${art.title}</h4>
+            <img src="${imagen}" alt="${art.title}" onerror="this.src='https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'">
+            <p class="descripcion">${art.description || 'Descripción no disponible'}</p>
+            <div class="noticia-footer">
+              <div class="noticia-fuente">${art.source?.name || "Fuente desconocida"}</div>
+              <button class="btn-leer" data-url="${art.url}">
+                Leer →
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      noticiasHTML += '</div>';
+      contenedor.innerHTML = noticiasHTML;
+      
+      // Si es respaldo, mostrar mensaje
+      if (esRespaldo) {
+        const mensaje = document.createElement('div');
+        mensaje.style.cssText = 'text-align: center; padding: 1rem; color: #fbbf24; background: rgba(251, 191, 36, 0.1); border-radius: 8px; margin-top: 1rem;';
+        mensaje.innerHTML = `
+          <p>⚠️ <strong>Modo demostración</strong></p>
+          <p style="font-size: 0.9rem; margin-top: 0.5rem;">Las noticias en tiempo real estarán disponibles cuando la API responda correctamente.</p>
+        `;
+        contenedor.appendChild(mensaje);
       }
     }
 
@@ -982,6 +1023,33 @@ iframe {
         });
       });
     });
+
+    // Extender el objeto Request con timeout
+    interface RequestInitWithTimeout extends RequestInit {
+      timeout?: number;
+    }
+
+    // Polyfill para fetch con timeout
+    const originalFetch = window.fetch;
+    window.fetch = function(url: string, options: RequestInitWithTimeout = {}) {
+      const { timeout = 8000, ...fetchOptions } = options;
+      
+      return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Timeout: La solicitud tardó demasiado'));
+        }, timeout);
+
+        originalFetch(url, fetchOptions)
+          .then((response) => {
+            clearTimeout(timeoutId);
+            resolve(response);
+          })
+          .catch((err) => {
+            clearTimeout(timeoutId);
+            reject(err);
+          });
+      });
+    };
   </script>
 
   <script>
