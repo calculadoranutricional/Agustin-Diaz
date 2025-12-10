@@ -189,7 +189,7 @@
     $searchBtn.addEventListener('click', ()=>{
       const term = $q.value.trim();
       if (!term) { fetchAndRender(); return; }
-      // filtrar localmente por coincidencia en título o descripción
+      // filtrar localmente por coincidencia en título o descripció
       const filtered = latestArticles.filter(a=>{
         const hay = (a.title||'') + ' ' + (a.description||'') + ' ' + (a.content||'');
         return hay.toLowerCase().includes(term.toLowerCase());
