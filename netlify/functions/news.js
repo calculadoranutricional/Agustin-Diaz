@@ -1,41 +1,45 @@
-// netlify/functions/news.js
-exports.handler = async (event) => {
+export async function handler(event, context) {
+  const API_KEY = process.env.NEWS_API_KEY;
+  
+  const params = event.queryStringParameters || {};
+  const q = params.q || "";
+  const pageSize = params.pageSize || 20;
+  
+  // Categorías válidas de NewsAPI
+  const categorias = [
+    "business",
+    "entertainment",
+    "general",
+    "health",
+    "science",
+    "sports",
+    "technology"
+  ];
+  
+  let url = "";
+  
+  // Si q coincide con una categoría real → usar top-headlines
+  if (categorias.includes(q)) {
+    url = `https://newsapi.org/v2/top-headlines?country=us&category=${q}&pageSize=${pageSize}&apiKey=${API_KEY}`;
+  }
+  // Si NO coincide → usar everything
+  else {
+    url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&pageSize=${pageSize}&sortBy=publishedAt&language=en&apiKey=${API_KEY}`;
+  }
+  
   try {
-    const params = event.queryStringParameters || {};
-    const q = params.q;
-    const country = params.country || 'us';
-    const category = params.category || 'business';
-    const pageSize = params.pageSize || '30';
-    const apiKey = process.env.NEWSAPI_KEY;
-    
-    if (!apiKey) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Missing API key. Set NEWSAPI_KEY in Netlify environment variables.' })
-      };
-    }
-    
-    const base = 'https://newsapi.org/v2/top-headlines';
-    const url = new URL(base);
-    url.searchParams.set('apiKey', apiKey);
-    if (q) url.searchParams.set('q', q);
-    url.searchParams.set('country', country);
-    url.searchParams.set('category', category);
-    url.searchParams.set('pageSize', pageSize);
-    
-    const res = await fetch(url.toString());
-    const data = await res.json();
+    const response = await fetch(url);
+    const data = await response.json();
     
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     };
     
-  } catch (err) {
+  } catch (e) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: String(err) })
+      body: JSON.stringify({ error: "Server error", details: e.message })
     };
   }
-};
+}
