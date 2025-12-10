@@ -5,22 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Noticias</title>
   <style>
-    body { 
-      margin: 20px; 
-      font-family: Arial, sans-serif; 
+    body {
+      margin: 20px;
+      font-family: Arial, sans-serif;
       background: #fff;
       color: #000;
     }
     h1 { margin-bottom: 10px; }
     #topics button {
-      margin: 3px; 
+      margin: 3px;
       padding: 6px 12px;
       font-size: 14px;
       border: 1px solid #ccc;
       background: #fff;
       cursor: pointer;
     }
-    #status { margin: 15px 0; font-size: 14px; color:#444; }
+    #topics button:hover {
+      background: #f0f0f0;
+    }
+    #status {
+      margin: 15px 0;
+      font-size: 14px;
+      color:#444;
+    }
     .article {
       border: 1px solid #ddd;
       padding: 10px;
@@ -37,7 +44,8 @@
     }
     .meta { font-size: 12px; color: #666; margin-bottom: 6px; }
     .title { font-weight: bold; margin-bottom: 6px; font-size: 16px; }
-    .desc { font-size: 14px; }
+    .desc { font-size: 14px; margin-bottom: 6px; }
+    a { color: #000; }
   </style>
 </head>
 
@@ -54,30 +62,30 @@
 <script>
 (function(){
 
-  const apiRoot = "/.netlify/functions/news";  
+  const apiRoot = "/.netlify/functions/news";
 
   const temas = [
-    { label: "Argentina", q: "argentina" },
-    { label: "Deportes", q: "sports" },
-    { label: "Ciencia", q: "science" },
+    { label: "General", q: "general" },
+    { label: "Negocios", q: "business" },
+    { label: "Entretenimiento", q: "entertainment" },
     { label: "Salud", q: "health" },
-    { label: "Nutrición", q: "nutrition" },
-    { label: "Tecnología", q: "technology" },
-    { label: "Economía", q: "economy" }
+    { label: "Ciencia", q: "science" },
+    { label: "Deportes", q: "sports" },
+    { label: "Tecnología", q: "technology" }
   ];
 
   const $topics = document.getElementById("topics");
   const $status = document.getElementById("status");
   const $container = document.getElementById("container");
 
-  let currentQuery = "argentina";
+  let currentCategory = "general";
 
-  // Crear botones de temas
+  // Crear botones de categorías reales
   function makeButtons(){
     temas.forEach(t => {
       const btn = document.createElement("button");
       btn.textContent = t.label;
-      btn.onclick = () => { currentQuery = t.q; fetchNews(); };
+      btn.onclick = () => { currentCategory = t.q; fetchNews(); };
       $topics.appendChild(btn);
     });
   }
@@ -101,9 +109,8 @@
 
     try {
       const params = new URLSearchParams({
-        q: currentQuery,
-        pageSize: 20,
-        country: "us"
+        q: currentCategory,
+        pageSize: 20
       });
 
       const r = await fetch(apiRoot + "?" + params.toString());
@@ -130,7 +137,6 @@
       }
 
       render(artículos);
-
       $status.textContent = "Listo.";
 
     } catch(e){
