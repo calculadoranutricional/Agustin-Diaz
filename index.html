@@ -1,240 +1,211 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Noticias - Funciona en GitHub Pages</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-/* Tus estilos aquí (igual que antes) */
-body {
-  font-family: Arial, sans-serif; margin: 0; padding: 0;
-  background: #f5f5f5; color: #111;
-}
-header {
-  background: white; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,.1);
-  position: sticky; top: 0; z-index: 10;
-}
-h1 { margin: 0; font-size: 20px; }
-#topics { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
-button {
-  padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc;
-  background: white; cursor: pointer; transition: .2s;
-}
-button:hover { background: #eaeaea; }
-button.active {
-  border-color: #0a74ff; background: #e2ecff;
-}
-#results {
-  padding: 20px;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-}
-.card {
-  background: white; border-radius: 8px; padding: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.1);
-  display: flex; flex-direction: column;
-}
-.card img {
-  width: 100%; height: 160px; object-fit: cover; border-radius: 6px;
-  background: #ddd;
-}
-.card-title { font-weight: bold; margin: 8px 0; }
-.card-meta { font-size: 12px; color: #666; }
-.card-desc { font-size: 14px; margin: 8px 0; }
-.read {
-  margin-top: auto; text-decoration: none; border: 1px solid #ccc;
-  padding: 6px 8px; border-radius: 6px; display: inline-block;
-  color: #111;
-}
-#status {
-  padding: 12px; font-size: 14px; color: #444;
-}
-#error { padding: 12px; margin: 12px; background: #ffe2e2; border-left: 4px solid #d10000; display: none; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Noticias - Top Business (US)</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8;--glass: rgba(255,255,255,0.03)}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{background:linear-gradient(180deg,#071126 0%, #07132a 100%);color:#e6eef6;display:flex;align-items:flex-start;justify-content:center;padding:28px;}
+    .wrap{width:100%;max-width:980px}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    h1{margin:0;font-size:20px;letter-spacing:-0.2px}
+    .kbd{font-size:12px;color:var(--muted);background:var(--glass);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
+    .controls{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:inherit;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#7c3aed);border:none;color:#041225}
+    .topic-list{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}
+    .search{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    input[type="search"]{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:10px}
+    .meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+    .title{font-weight:600;margin:0}
+    .description{font-size:14px;color:#d9e6f5;line-height:1.25}
+    .thumb{width:100%;height:150px;object-fit:cover;border-radius:8px}
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+    .empty{padding:20px;border-radius:12px;background:rgba(255,255,255,0.01);text-align:center;color:var(--muted)}
+    @media (max-width:520px){.thumb{height:120px}}
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Noticias — Top Business (US)</h1>
+        <div class="kbd">Fuente: NewsAPI (proxy en Netlify)</div>
+      </div>
 
-<header>
-  <h1>Noticias - GitHub Pages</h1>
-  <div id="topics">
-    <button class="topic active" data-q="tesla">Tesla</button>
-    <button class="topic" data-q="inteligencia artificial">IA</button>
-    <button class="topic" data-q="bitcoin">Cripto</button>
-    <button class="topic" data-q="ciencia">Ciencia</button>
-    <button class="topic" data-q="tecnología">Tecnología</button>
-    <button id="customBtn">Buscar tema</button>
+      <div class="controls">
+        <button class="btn" id="refreshBtn">Actualizar</button>
+        <button class="btn primary" id="openAll">Abrir todas</button>
+      </div>
+    </header>
+
+    <div class="topic-list" id="topics">
+      <!-- botones generados por JS -->
+    </div>
+
+    <div class="search">
+      <input id="q" type="search" placeholder="Buscar dentro de resultados (ej: Apple, Tesla, mercado)"/>
+      <button class="btn" id="searchBtn">Buscar</button>
+    </div>
+
+    <div id="status" class="empty">Cargando noticias...</div>
+
+    <div class="grid" id="articles" aria-live="polite"></div>
+
+    <footer>
+      Consejo: configura tu API key en Netlify como variable de entorno (REACT_APP_NEWSAPI_KEY o NEWSAPI_KEY) en vez de ponerla en código.
+    </footer>
   </div>
-</header>
 
-<div id="status">Haz clic en un tema para ver noticias</div>
-<div id="error"></div>
-<div id="results"></div>
+  <script>
+  (function(){
+    const apiRoot = '/.netlify/functions/news'; // proxy en Netlify
+    const defaultParams = { country: 'us', category: 'business', pageSize: 30 };
+    const topics = [
+      {label:'Business', q:null},
+      {label:'Technology', q:'technology'},
+      {label:'Economy', q:'economy'},
+      {label:'Markets', q:'markets'},
+      {label:'Tesla', q:'tesla'},
+      {label:'Apple', q:'apple'}
+    ];
 
-<script>
-// =========================================================
-// API CON CORS HABILITADO - Funciona en GitHub/Netlify
-// =========================================================
-// API gratuita de prueba (puedes cambiarla)
-const API_OPTIONS = [
-  {
-    name: "NewsAPI Proxy",
-    url: (query) => `https://newsapi.org/v2/everything?q=${query}&pageSize=10&apiKey=c9a01369403b4c618b31893010504c2f`
-  },
-  {
-    name: "GNews",
-    url: (query) => `https://gnews.io/api/v4/search?q=${query}&lang=es&max=10&apikey=1e3e2c5c6fe9c0a3b8a8c8c8c8c8c8c8`
-  }
-];
+    const $topics = document.getElementById('topics');
+    const $articles = document.getElementById('articles');
+    const $status = document.getElementById('status');
+    const $q = document.getElementById('q');
+    const $refresh = document.getElementById('refreshBtn');
+    const $openAll = document.getElementById('openAll');
+    const $searchBtn = document.getElementById('searchBtn');
 
-let currentQuery = "tesla";
+    let currentQuery = null;
+    let latestArticles = [];
 
-// =========================================================
-// ELEMENTOS
-// =========================================================
-const topicButtons = document.querySelectorAll(".topic");
-const customBtn = document.getElementById("customBtn");
-const statusEl = document.getElementById("status");
-const resultsEl = document.getElementById("results");
-const errorEl = document.getElementById("error");
+    function makeTopicButtons(){
+      topics.forEach(t=>{
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = t.label;
+        btn.addEventListener('click', ()=> {
+          currentQuery = t.q;
+          fetchAndRender();
+        });
+        $topics.appendChild(btn);
+      });
+    }
 
-// =========================================================
-// EVENTOS
-// =========================================================
-topicButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    topicButtons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentQuery = btn.dataset.q;
-    fetchNewsWithFallback();
-  });
-});
+    function setStatus(text){
+      $status.textContent = text;
+    }
 
-customBtn.addEventListener("click", () => {
-  const q = prompt("Buscar noticias sobre:");
-  if (!q) return;
-  topicButtons.forEach(b => b.classList.remove("active"));
-  currentQuery = q;
-  fetchNewsWithFallback();
-});
-
-// =========================================================
-// FUNCIÓN CON MÚLTIPLES INTENTOS
-// =========================================================
-async function fetchNewsWithFallback() {
-  errorEl.style.display = "none";
-  statusEl.textContent = "Buscando noticias...";
-  resultsEl.innerHTML = "<div style='padding:20px;text-align:center'>Cargando...</div>";
-  
-  // Intentar varias APIs
-  for (let api of API_OPTIONS) {
-    try {
-      const response = await fetchWithTimeout(api.url(currentQuery), { timeout: 5000 });
-      const data = await response.json();
-      
-      if (data.articles || data.items) {
-        const articles = data.articles || data.items;
-        if (articles.length > 0) {
-          renderNews(articles);
-          statusEl.textContent = `Noticias sobre: ${currentQuery} (via ${api.name})`;
+    async function fetchAndRender(){
+      setStatus('Cargando noticias...');
+      $articles.innerHTML = '';
+      const params = new URLSearchParams(defaultParams);
+      if (currentQuery) params.set('q', currentQuery);
+      try {
+        const res = await fetch(apiRoot + '?' + params.toString());
+        if (!res.ok){
+          const txt = await res.text();
+          throw new Error('Error proxy: ' + res.status + ' ' + txt);
+        }
+        const payload = await res.json();
+        if (!payload.articles || payload.articles.length === 0){
+          setStatus('No hay artículos para esa consulta.');
+          latestArticles = [];
           return;
         }
+        latestArticles = payload.articles;
+        renderArticles(latestArticles);
+        setStatus('Mostrando ' + latestArticles.length + ' artículos.');
+      } catch (err) {
+        console.error(err);
+        setStatus('Error cargando noticias — revisa la función en Netlify y la API key. ' + (err.message||''));
       }
-    } catch (err) {
-      console.log(`API ${api.name} falló:`, err.message);
-      continue;
     }
-  }
-  
-  // Si todas fallan, mostrar noticias de ejemplo
-  showExampleNews();
-}
 
-// =========================================================
-// UTILIDADES
-// =========================================================
-function fetchWithTimeout(url, options = {}) {
-  const { timeout = 8000 } = options;
-  
-  return Promise.race([
-    fetch(url),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), timeout)
-    )
-  ]);
-}
+    function renderArticles(articles){
+      $articles.innerHTML = '';
+      for (const art of articles){
+        const card = document.createElement('article');
+        card.className = 'card';
 
-function renderNews(articles) {
-  resultsEl.innerHTML = "";
-  
-  if (!articles || articles.length === 0) {
-    resultsEl.innerHTML = "<div style='padding:20px;text-align:center'>No se encontraron noticias recientes</div>";
-    return;
-  }
-  
-  articles.slice(0, 12).forEach(a => {
-    const card = document.createElement("div");
-    card.className = "card";
-    
-    const imgUrl = a.urlToImage || a.image || 
-      `https://source.unsplash.com/400x200/?${encodeURIComponent(currentQuery)}`;
-    
-    const title = a.title || "Sin título";
-    const desc = a.description || "";
-    const source = a.source?.name || "Fuente";
-    const date = a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('es-ES') : "Fecha desconocida";
-    const url = a.url || "#";
-    
-    card.innerHTML = `
-      <img src="${imgUrl}" alt="${title.substring(0, 50)}" onerror="this.src='https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=400&h=200&fit=crop'">
-      <div class="card-meta">${source} — ${date}</div>
-      <div class="card-title">${title}</div>
-      <div class="card-desc">${desc.substring(0, 100)}...</div>
-      <a class="read" href="${url}" target="_blank">Leer más</a>
-    `;
-    resultsEl.appendChild(card);
-  });
-}
+        const img = document.createElement('img');
+        img.className = 'thumb';
+        img.alt = art.title || 'imagen noticia';
+        img.src = art.urlToImage || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300"><rect width="100%"height="100%" fill="%230b1220"/><text x="50%" y="50%" fill="%2394a3b8" font-size="20" font-family="Arial" text-anchor="middle" alignment-baseline="middle">Sin imagen</text></svg>';
 
-function showExampleNews() {
-  const examples = [
-    {
-      title: `Últimas noticias sobre ${currentQuery}`,
-      description: "Las noticias en tiempo real requieren una API key. Regístrate en gnews.io para obtener noticias reales.",
-      url: "https://gnews.io/",
-      urlToImage: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=400&h=200&fit=crop",
-      publishedAt: new Date().toISOString(),
-      source: { name: "Demo" }
-    },
-    {
-      title: "Cómo configurar noticias en tu sitio web",
-      description: "Usa APIs gratuitas como GNews, MediaStack o RSS feeds para mostrar noticias reales.",
-      url: "https://gnews.io/docs/",
-      urlToImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=200&fit=crop",
-      publishedAt: new Date().toISOString(),
-      source: { name: "Tutorial" }
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.innerHTML = '<span>' + (art.source?.name || '') + '</span><span>' + formatDate(art.publishedAt) + '</span>';
+
+        const title = document.createElement('h3');
+        title.className = 'title';
+        title.textContent = art.title || 'Sin título';
+
+        const desc = document.createElement('div');
+        desc.className = 'description';
+        desc.textContent = art.description || (art.content ? art.content.substring(0,200) : '');
+
+        const readMore = document.createElement('div');
+        readMore.style.display = 'flex';
+        readMore.style.justifyContent = 'space-between';
+        readMore.style.alignItems = 'center';
+
+        const link = document.createElement('a');
+        link.href = art.url;
+        link.target = '_blank';
+        link.rel = 'noreferrer noopener';
+        link.className = 'btn';
+        link.textContent = 'Leer original';
+
+        readMore.appendChild(link);
+
+        card.appendChild(img);
+        card.appendChild(meta);
+        card.appendChild(title);
+        card.appendChild(desc);
+        card.appendChild(readMore);
+
+        $articles.appendChild(card);
+      }
     }
-  ];
-  
-  renderNews(examples);
-  statusEl.textContent = "Modo demostración - Para noticias reales, configura una API key";
-  errorEl.style.display = "block";
-  errorEl.innerHTML = `
-    <strong>Configuración necesaria:</strong><br>
-    1. Regístrate en <a href="https://gnews.io/" target="_blank">gnews.io</a> (gratis)<br>
-    2. Obtén tu API key<br>
-    3. Reemplaza la línea 85 del código con tu key<br>
-    4. ¡Listo! Tendrás noticias reales en GitHub Pages.
-  `;
-}
 
-// =========================================================
-// INICIO
-// =========================================================
-// Mostrar noticias de ejemplo al cargar
-showExampleNews();
-</script>
+    function formatDate(s){
+      if (!s) return '';
+      const d = new Date(s);
+      return d.toLocaleString();
+    }
 
+    $refresh.addEventListener('click', ()=> fetchAndRender());
+    $openAll.addEventListener('click', ()=>{
+      latestArticles.forEach(a=>{ if(a.url) window.open(a.url,'_blank'); });
+    });
+
+    $searchBtn.addEventListener('click', ()=>{
+      const term = $q.value.trim();
+      if (!term) { fetchAndRender(); return; }
+      // filtrar localmente por coincidencia en título o descripción
+      const filtered = latestArticles.filter(a=>{
+        const hay = (a.title||'') + ' ' + (a.description||'') + ' ' + (a.content||'');
+        return hay.toLowerCase().includes(term.toLowerCase());
+      });
+      if (filtered.length === 0) setStatus('No se encontró "'+term+'" en los resultados actuales.');
+      else setStatus('Mostrando ' + filtered.length + ' resultados filtrados.');
+      renderArticles(filtered);
+    });
+
+    // atajo: Enter en input
+    $q.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') $searchBtn.click(); });
+
+    // inicial
+    makeTopicButtons();
+    fetchAndRender();
+  })();
+  </script>
 </body>
 </html>
